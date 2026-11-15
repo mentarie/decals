@@ -1,0 +1,1857 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta charset="utf-8">
+<title>Data Engineering Knowledge Base</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: masthead + rail tab sticky; tiap topik = panel dengan sub-tab;
+   wizard & kalkulator dua kolom (input | hasil), satu kolom di mobile.
+   Tanpa web font: semua tipografi memakai font sistem agar tidak ada request jaringan. */
+:root{
+  --bg:#F2F4F7; --surface:#FFFFFF; --surface-2:#E9EDF2; --ink:#14202C; --muted:#536172;
+  --line:#D3DAE3; --accent:#2A4FC4; --accent-ink:#FFFFFF; --accent-soft:#E3E9FB;
+  --mark:#FFE08A; --mark-ink:#14202C;
+  --good:#1D7448; --good-soft:#DFF2E7; --warn:#8F5600; --warn-soft:#FBEFD8; --bad:#B42318; --bad-soft:#FBE3E0;
+  --bar:#A3B0C0;
+  --font-ui:"Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Roboto,Arial,sans-serif;
+  --font-display:"Segoe UI Variable Display","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Roboto,Arial,sans-serif;
+  --font-mono:ui-monospace,"Cascadia Mono","SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --r:8px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E141B; --surface:#151D26; --surface-2:#1C2631; --ink:#E5EBF1; --muted:#9AA8B8;
+    --line:#2A3746; --accent:#8EA6FF; --accent-ink:#0E141B; --accent-soft:#1D2A4C;
+    --mark:#7A5C0E; --mark-ink:#FFF6D8;
+    --good:#5DD39A; --good-soft:#11311F; --warn:#F2B55E; --warn-soft:#37280F; --bad:#FF8C7D; --bad-soft:#3B1915;
+    --bar:#4B5A6B; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E141B; --surface:#151D26; --surface-2:#1C2631; --ink:#E5EBF1; --muted:#9AA8B8;
+  --line:#2A3746; --accent:#8EA6FF; --accent-ink:#0E141B; --accent-soft:#1D2A4C;
+  --mark:#7A5C0E; --mark-ink:#FFF6D8;
+  --good:#5DD39A; --good-soft:#11311F; --warn:#F2B55E; --warn-soft:#37280F; --bad:#FF8C7D; --bad-soft:#3B1915;
+  --bar:#4B5A6B; color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 var(--font-ui);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:1280px;margin-inline:auto}
+h1,h2,h3,h4{font-family:var(--font-display);line-height:1.2;margin:0;text-wrap:balance;letter-spacing:-.01em}
+p{margin:0}
+ul,ol{margin:0;padding:0}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.muted{color:var(--muted)}
+.mono{font-family:var(--font-mono)}
+.num{font-variant-numeric:tabular-nums}
+.eyebrow{font:500 11.5px/1.3 var(--font-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.h-sm{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-family:var(--font-mono);font-weight:500}
+
+/* Masthead */
+.mast{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between;padding-block:22px 14px}
+.mast h1{font-size:clamp(22px,3vw,30px);font-weight:700}
+.mast-stats{display:flex;gap:18px;flex-wrap:wrap}
+.mast-stats div{display:flex;flex-direction:column}
+.mast-stats b{font:600 18px/1.1 var(--font-mono)}
+.mast-stats span{font-size:12px;color:var(--muted)}
+
+/* Tab utama */
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:6;background:var(--bg);display:flex;gap:2px;overflow-x:auto;border-bottom:1px solid var(--line);scrollbar-width:thin}
+.tabs [role=tab]{appearance:none;background:none;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;padding:11px 14px;color:var(--muted);font-weight:600;cursor:pointer;white-space:nowrap}
+.tabs [role=tab]:hover{color:var(--ink)}
+.tabs [role=tab][aria-selected=true]{color:var(--ink);border-bottom-color:var(--accent)}
+.tabs [role=tab]:focus-visible{outline-offset:-3px}
+
+/* Panel topik */
+main{padding-block:20px 8px}
+.topic-head{display:flex;flex-wrap:wrap;gap:16px 32px;align-items:flex-end;justify-content:space-between;margin-bottom:16px}
+.th-text{max-width:62ch;display:grid;gap:6px;min-width:0}
+.th-text h2{font-size:clamp(20px,2.6vw,26px)}
+.lede{color:var(--muted)}
+.searchbox{display:grid;gap:4px;width:min(100%,420px)}
+.searchbox label{font-size:12.5px;font-weight:600}
+input[type=search],input[type=number],select,textarea{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:8px 10px;min-height:38px}
+input[type=search]:focus,input[type=number]:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px var(--accent-soft)}
+input[aria-invalid=true]{border-color:var(--bad)}
+.search-status{font-size:12.5px;color:var(--muted);min-height:1.2em}
+mark.hl{background:var(--mark);color:var(--mark-ink);border-radius:2px;padding:0 1px}
+.s-miss{display:none!important}
+.empty{padding:18px;border:1px dashed var(--line);border-radius:var(--r);color:var(--muted);text-align:center}
+
+/* Sub-tab */
+.subtabs,.inner-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px}
+.subtabs [role=tab],.inner-tabs [role=tab]{appearance:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 14px;cursor:pointer;font-weight:600;font-size:14px;color:var(--muted);display:inline-flex;gap:8px;align-items:center}
+.subtabs [role=tab][aria-selected=true],.inner-tabs [role=tab][aria-selected=true]{background:var(--accent-soft);border-color:var(--accent);color:var(--ink)}
+.cnt{font:600 11px/1 var(--font-mono);background:var(--ink);color:var(--bg);border-radius:999px;padding:3px 6px}
+.inner-tabs [role=tab]{border-radius:6px;font-size:13.5px}
+
+/* Tombol & kontrol umum */
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+.btn{appearance:none;border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:7px 12px;cursor:pointer;font-weight:600;font-size:13.5px}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.seg{display:flex;flex-wrap:wrap;gap:6px;border:0;margin:0;padding:0;min-width:0}
+.seg legend{padding:0}
+.seg-opt{position:relative;cursor:pointer}
+.seg-opt input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.seg-opt span{display:inline-block;border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:5px 10px;font-size:13.5px}
+.seg-opt input:checked + span{background:var(--accent-soft);border-color:var(--accent);font-weight:600}
+.seg-opt input:focus-visible + span{outline:2px solid var(--accent);outline-offset:2px}
+.badge{display:inline-flex;align-items:center;gap:4px;font:500 11.5px/1.5 var(--font-mono);border:1px solid var(--line);border-radius:4px;padding:0 6px;white-space:nowrap;color:var(--muted)}
+.badge.oss{color:var(--good);border-color:currentColor}
+.badge.ent{color:var(--accent);border-color:currentColor}
+.badge.warn{color:var(--warn);background:var(--warn-soft);border-color:transparent}
+.badge.bad{color:var(--bad);background:var(--bad-soft);border-color:transparent}
+.badge.good{color:var(--good);background:var(--good-soft);border-color:transparent}
+.tag{font:500 12px/1.5 var(--font-mono);background:var(--surface-2);border-radius:4px;padding:1px 7px;color:var(--muted)}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.alert{border-radius:6px;padding:8px 10px;font-size:13.5px;border-left:3px solid currentColor}
+.alert.warn{background:var(--warn-soft);color:var(--warn)}
+.alert.bad{background:var(--bad-soft);color:var(--bad)}
+.alert.info{background:var(--accent-soft);color:var(--ink);border-left-color:var(--accent)}
+.alert.good{background:var(--good-soft);color:var(--good)}
+.alert span{color:var(--ink)}
+details.formula{margin-top:8px}
+details.formula summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--accent);width:max-content}
+details.formula pre{margin:8px 0 0;padding:10px 12px;background:var(--surface-2);border-radius:6px;font:12.5px/1.6 var(--font-mono);white-space:pre-wrap;overflow-x:auto}
+.disclaimer{font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px}
+
+/* Daftar isi */
+.toc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:14px}
+.toc-card{display:grid;gap:10px;align-content:start;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;color:inherit;text-decoration:none;transition:border-color .15s}
+.toc-card:hover{border-color:var(--accent)}
+.toc-card h3{font-size:19px}
+.toc-card .secs{font-size:13px;color:var(--muted)}
+.snips{display:grid;gap:4px;font-size:13px;border-top:1px solid var(--line);padding-top:8px}
+.snips p{color:var(--muted)}
+
+/* Wizard */
+.wiz{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:24px;align-items:start}
+.wiz-main{display:grid;gap:16px;min-width:0}
+.preset-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr));gap:8px;margin-top:8px}
+.preset{appearance:none;text-align:left;display:grid;gap:3px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;cursor:pointer}
+.preset:hover{border-color:var(--accent)}
+.preset[aria-pressed=true]{border-color:var(--accent);background:var(--accent-soft)}
+.preset strong{font-size:14px}
+.preset span{font-size:12.5px;color:var(--muted)}
+.wiz-bar{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center}
+.progress{font:500 13px var(--font-mono);color:var(--muted)}
+.crit-list{list-style:none;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.crit{display:grid;gap:10px;padding:14px 16px;border-top:1px solid var(--line)}
+.crit:first-child{border-top:0}
+.crit-q{display:flex;gap:12px}
+.crit-no{font:500 12px/1.6 var(--font-mono);color:var(--muted);padding-top:1px}
+.crit h4{font-size:15px;font-weight:600}
+.help{font-size:13px;color:var(--muted)}
+.imp{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
+.imp input{width:140px;accent-color:var(--accent)}
+.imp output{font:600 13px var(--font-mono);color:var(--ink);min-width:2ch}
+.wiz-result{position:sticky;top:60px;display:grid;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;max-height:calc(100vh - 80px);overflow:auto;min-width:0}
+.rec{background:var(--accent-soft);border-radius:6px;padding:10px 12px}
+.rec b{display:block;font-size:17px;font-family:var(--font-display);margin-top:2px}
+.res-step{display:grid;gap:8px}
+.res-step h4{font-size:14px;display:flex;justify-content:space-between;gap:8px}
+.dbars{display:grid;gap:6px}
+.dbar{display:grid;grid-template-columns:minmax(0,9.5rem) 1fr 3.2rem;gap:8px;align-items:center;font-size:13px}
+.dbar-l{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dbar-track{position:relative;height:14px;background:var(--surface-2);border-radius:3px}
+.dbar-track::after{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--muted)}
+.dbar-fill{position:absolute;top:0;bottom:0;background:var(--bar);border-radius:2px}
+.dbar.win .dbar-fill.pos{background:var(--accent)}
+.dbar.win .dbar-l{font-weight:700}
+.dbar-v{font:500 12.5px var(--font-mono);text-align:right;font-variant-numeric:tabular-nums}
+.res-list{display:grid;gap:6px;padding-left:18px;font-size:13.5px}
+.res-block{display:grid;gap:6px}
+.res-block h4{font-size:14px}
+
+/* Tool explorer */
+.tx{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:24px;align-items:start}
+.tx-main{display:grid;gap:18px;min-width:0}
+.filters{display:grid;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+.frow{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.frow > .flabel{font-size:12.5px;font-weight:600;min-width:72px}
+.frow select{width:auto;min-width:220px;max-width:100%}
+.fitnote{font-size:13px;color:var(--muted)}
+.cat{display:grid;gap:10px}
+.cat-h{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+.cat-h h3{font-size:17px}
+.cat-h p{font-size:13px;color:var(--muted)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr));gap:12px}
+.tool{display:grid;gap:9px;align-content:start;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:13px 14px;min-width:0}
+.tool.picked{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.tool-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.tool h4{font-size:16px}
+.pick{appearance:none;border:1px solid var(--accent);background:transparent;color:var(--accent);border-radius:6px;padding:3px 10px;font-weight:600;font-size:13px;cursor:pointer;white-space:nowrap}
+.pick[aria-pressed=true]{background:var(--accent);color:var(--accent-ink)}
+.badges{display:flex;flex-wrap:wrap;gap:5px}
+.k{display:block;font:500 11px/1.4 var(--font-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:2px}
+.tool p,.tool li{font-size:13.5px}
+.pc{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pc ul{padding-left:16px;display:grid;gap:2px}
+.fitwhy{font-size:12.5px;color:var(--warn)}
+.upd{font:12px var(--font-mono);color:var(--muted)}
+.stack{position:sticky;top:60px;display:grid;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;max-height:calc(100vh - 80px);overflow:auto}
+.stack-head{display:flex;justify-content:space-between;align-items:baseline}
+.stack-head h3{font-size:18px}
+.flow svg{display:block;width:100%;max-width:340px;height:auto}
+.fl-box{fill:var(--surface);stroke:var(--line);stroke-width:1}
+.fl-box.on{fill:var(--accent-soft);stroke:var(--accent)}
+.fl-box.off{stroke-dasharray:4 3}
+.fl-k{fill:var(--muted);font:500 9.5px var(--font-mono);text-transform:uppercase;letter-spacing:.06em}
+.fl-n{fill:var(--ink);font:600 13px var(--font-ui)}
+.fl-n.sm{font-size:11px}
+.fl-n.off{fill:var(--muted);font-weight:400;font-style:italic}
+.fl-a{stroke:var(--muted);stroke-width:1.5}
+.fl-ah{fill:var(--muted)}
+.stack-list{list-style:none;display:grid;font-size:13px}
+.stack-list li{display:flex;justify-content:space-between;gap:10px;padding:4px 0;border-top:1px solid var(--line)}
+.stack-list li span{color:var(--muted)}
+.stack-list li b{text-align:right}
+.cluster{background:var(--surface-2);border-radius:6px;padding:8px 10px;font-size:13px}
+.warns{display:grid;gap:6px}
+
+/* Kalkulator */
+.calc-summary{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--r);padding:12px 14px;margin-bottom:16px;display:grid;gap:8px}
+.calc-summary p{font-size:14.5px}
+.calc-summary b{font-variant-numeric:tabular-nums}
+.calc{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:24px;align-items:start}
+.calc-form{display:grid;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;position:sticky;top:60px;max-height:calc(100vh - 80px);overflow:auto}
+.fgroup{display:grid;gap:12px;border:0;padding:0;margin:0;min-width:0}
+.fgroup > legend,.fgroup > summary{font:500 12px var(--font-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:0;margin-bottom:2px}
+details.fgroup > summary{cursor:pointer;color:var(--accent)}
+details.fgroup[open] > summary{margin-bottom:10px}
+.field{display:grid;gap:4px}
+.field label{font-size:13px;font-weight:600}
+.unit{font-weight:400;color:var(--muted)}
+.fh{font-size:12px;color:var(--muted)}
+.err{font-size:12px;color:var(--bad)}
+.warnmsg{font-size:12px;color:var(--warn)}
+.inline{display:grid;grid-template-columns:1fr 84px;gap:6px}
+.check{display:flex;gap:8px;align-items:center;font-size:13px;font-weight:400!important}
+.check input{accent-color:var(--accent);width:16px;height:16px}
+.calc-out{display:grid;gap:14px;min-width:0}
+.step{display:grid;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;min-width:0}
+.step header{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:baseline}
+.step-no{font:500 12px var(--font-mono);color:var(--accent)}
+.step h4{font-size:16px;flex:1 1 auto}
+.kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,150px),1fr));gap:6px 14px;margin:0}
+.kv div{display:grid}
+.kv dt{font-size:12px;color:var(--muted)}
+.kv dd{margin:0;font:500 14px var(--font-mono);font-variant-numeric:tabular-nums}
+.result{display:flex;flex-wrap:wrap;gap:8px 22px}
+.big{display:grid}
+.big b{font:600 22px/1.2 var(--font-mono);font-variant-numeric:tabular-nums}
+.big span{font-size:12px;color:var(--muted)}
+.interp{font-size:13.5px;color:var(--muted);font-style:italic}
+.note{font-size:13px;background:var(--surface-2);border-radius:6px;padding:8px 10px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:6px}
+table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{padding:7px 10px;text-align:right;border-top:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+thead th{border-top:0;background:var(--surface-2);font:500 11.5px var(--font-mono);text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+tr.hi td{font-weight:700}
+.hbars{display:grid;gap:8px}
+.hb{display:grid;grid-template-columns:minmax(0,8.5rem) 1fr 5.5rem;gap:8px;align-items:center;font-size:13px}
+.hb-t{position:relative;height:16px;background:var(--surface-2);border-radius:3px}
+.hb-f{position:absolute;left:0;top:0;bottom:0;background:var(--bar);border-radius:3px}
+.hb-f.ok{background:var(--accent)}
+.hb-ref{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--bad)}
+.hb-v{font:500 12.5px var(--font-mono);text-align:right}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:3px;vertical-align:middle;margin-right:6px;background:var(--accent)}
+.legend i.alt{background:var(--bar)}
+.legend i.ref{background:var(--bad);width:3px;height:12px}
+.chart svg{display:block;width:100%;height:auto}
+.ax{stroke:var(--line);stroke-width:1}
+.ax-t{fill:var(--muted);font:11px var(--font-mono)}
+.ln{fill:none;stroke-width:2.2}
+.ln.a{stroke:var(--accent)}
+.ln.b{stroke:var(--bar);stroke-dasharray:5 4}
+.dot{fill:var(--accent);stroke:var(--surface);stroke-width:2}
+.dot-t{fill:var(--ink);font:600 11px var(--font-mono)}
+.cost-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:12px}
+.cost{border:1px solid var(--line);border-radius:6px;padding:10px 12px;display:grid;gap:6px}
+.cost.sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.cost h5{margin:0;font-size:14px;display:flex;justify-content:space-between;gap:8px}
+.cost dl{display:grid;grid-template-columns:1fr auto;gap:2px 10px;margin:0;font-size:13px}
+.cost dd{margin:0;text-align:right;font-family:var(--font-mono)}
+.cost .tot{border-top:1px solid var(--line);padding-top:4px;font-weight:700}
+
+/* Catatan & checklist */
+.notes{display:grid;gap:12px}
+.note-e{display:grid;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;max-width:80ch}
+.note-e h4{font-size:16px}
+.note-meta{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font:12px var(--font-mono);color:var(--muted)}
+.note-src{font-size:12.5px;color:var(--muted)}
+.cl-group{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px;display:grid;gap:4px}
+.cl-group h4{font-size:15px;margin-bottom:4px}
+.cl-item{display:flex;gap:10px;padding:6px 0;border-top:1px solid var(--line)}
+.cl-item input{accent-color:var(--accent);width:17px;height:17px;margin-top:2px;flex:none}
+.cl-item label{display:grid;gap:2px;cursor:pointer}
+.cl-item small{color:var(--muted);font-size:12.5px}
+.cl-wrap{display:grid;gap:12px;max-width:820px}
+
+/* Footer, toast, copy fallback */
+footer{border-top:1px solid var(--line);margin-top:28px;padding-block:18px 28px;display:grid;gap:12px;font-size:13.5px}
+footer details{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 14px;max-width:900px}
+footer summary{cursor:pointer;font-weight:600}
+.howto{display:grid;gap:12px;margin-top:10px}
+.howto h4{font-size:14px}
+.howto pre{margin:6px 0 0;padding:10px 12px;background:var(--surface-2);border-radius:6px;font:12px/1.55 var(--font-mono);overflow-x:auto}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 14px;border-radius:6px;font-size:13.5px;z-index:20;max-width:calc(100% - 32px)}
+.copybox{position:fixed;inset:auto max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));max-width:560px;margin-inline:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px;display:grid;gap:8px;z-index:21;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.copybox textarea{font:12px/1.5 var(--font-mono);resize:vertical}
+
+@media (max-width:1100px){ .tx{grid-template-columns:minmax(0,1fr)} .stack{position:static;max-height:none} }
+@media (max-width:960px){
+  .wiz,.calc{grid-template-columns:minmax(0,1fr)}
+  .wiz-result,.calc-form{position:static;max-height:none}
+}
+@media (max-width:520px){ .pc{grid-template-columns:1fr} .dbar{grid-template-columns:minmax(0,6.5rem) 1fr 2.8rem} .hb{grid-template-columns:minmax(0,5.5rem) 1fr 4.6rem} }
+@media (prefers-reduced-motion:reduce){ *{transition:none!important;scroll-behavior:auto!important} }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="mast">
+    <div>
+      <p class="eyebrow" id="mast-meta"></p>
+      <h1 id="mast-title"></h1>
+    </div>
+    <div class="mast-stats" id="mast-stats"></div>
+  </header>
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Topik knowledge base"></nav>
+  <main id="main"></main>
+  <footer id="footer"></footer>
+</div>
+<div id="toast" role="status" aria-live="polite" hidden></div>
+<div id="copybox" class="copybox" role="dialog" aria-labelledby="copybox-t" hidden>
+  <p id="copybox-t">Clipboard tidak tersedia di tampilan ini. Teks sudah dipilih, salin dengan Ctrl+C atau ⌘C.</p>
+  <textarea id="copybox-text" rows="8" readonly aria-label="Teks ringkasan"></textarea>
+  <div class="btns"><button type="button" class="btn" id="copybox-close">Tutup</button></div>
+</div>
+
+<script>
+"use strict";
+/* =====================================================================
+   1. KB_DATA — SEMUA KONTEN ADA DI SINI.
+   Untuk menambah topik, tool, kriteria, rumus, atau catatan cukup edit
+   objek ini. Kode rendering di bawah membaca data ini apa adanya.
+   Tipe bagian (sections[].type) yang dikenali renderer:
+     "wizard" | "tools" | "sizing" | "notes" | "checklist"
+   ===================================================================== */
+const KB_DATA = {
+  meta: {
+    title: "Data Engineering Knowledge Base",
+    version: "1.0",
+    updated: "2026-11-14",
+    disclaimer: "Harga, fitur, dan batasan vendor berubah cepat. Item berlabel “perlu diverifikasi” wajib dicek ke dokumentasi resmi sebelum dipakai untuk keputusan.",
+    howTo: [
+      { title: "Menambah topik baru",
+        text: "Tambahkan satu objek di KB_DATA.topics (cari komentar “TAMBAH TOPIK BARU DI SINI”). Topik otomatis muncul sebagai tab dan kartu di Daftar Isi. slug hanya boleh huruf kecil, angka, dan tanda hubung.",
+        code: "namaTopik: {\n  slug: \"nama-topik\", title: \"Judul\", desc: \"Deskripsi satu baris\", tags: [\"tag\"],\n  sections: [ { id: \"checklist\", label: \"Checklist\", type: \"checklist\", source: \"checklist\" },\n              { id: \"catatan\", label: \"Catatan\", type: \"notes\", source: \"notes\" } ],\n  checklist: { groups: [ { title: \"Grup\", items: [ { text: \"Item\", detail: \"Penjelasan\" } ] } ] },\n  notes: [ { date: \"2026-11-14\", title: \"…\", body: \"…\", tags: [], source: \"…\" } ]\n}" },
+      { title: "Menambah tool",
+        text: "Tambahkan objek ke pipelineDecision.tools.items. Field cat harus salah satu id di tools.categories. Isi verify: true bila harga atau fitur belum pasti, dan updated dengan tanggal pengecekan.",
+        code: "{ id: \"nama\", cat: \"orchestrator\", name: \"Nama Tool\", license: \"Open Source\", env: \"Keduanya\",\n  provider: null, setup: \"Sedang\", cost: \"…\", useCase: \"…\", pros: [\"…\"], cons: [\"…\"],\n  verify: true, updated: \"2026-11-14\" }" },
+      { title: "Menambah kriteria wizard",
+        text: "Tambahkan objek ke pipelineDecision.wizard.criteria. Setiap jawaban memberi skor −3 s/d +3 ke id opsi (onprem, cloud, hybrid, oss, enterprise, gcp, aws, azure, multi). Opsi yang tidak disebut bernilai 0.",
+        code: "{ id: \"kriteria\", label: \"Pertanyaan\", help: \"…\", importance: 3,\n  answers: [ { id: \"a\", label: \"Jawaban A\", scores: { cloud: 2, onprem: -1 } } ] }" },
+      { title: "Menambah aturan kompatibilitas atau rumus",
+        text: "Aturan stack ada di tools.compatRules (tipe requires, distinctProvider, envMix, clusterNeedsEngine). Aturan rekomendasi Spark ada di sizing.spark.rules, dan parameter konfigurasi per database ada di sizing.storage.dbTypes[].params." }
+    ]
+  },
+
+  // TAMBAH TOPIK BARU DI SINI — satu objek = satu tab + satu kartu di Daftar Isi.
+  topics: {
+
+    /* ---------------------------------------------------------------
+       TOPIK 1: Pipeline Decision
+       --------------------------------------------------------------- */
+    pipelineDecision: {
+      slug: "pipeline-decision",
+      title: "Pipeline Decision",
+      desc: "Memilih arsitektur, tool, dan ukuran infrastruktur pipeline data secara terukur.",
+      tags: ["arsitektur", "cloud", "on-prem", "sizing", "tooling"],
+      sections: [
+        { id: "wizard", label: "Decision Wizard", type: "wizard", source: "wizard" },
+        { id: "tools", label: "Tool Explorer", type: "tools", source: "tools" },
+        { id: "sizing", label: "Sizing Calculator", type: "sizing", source: "sizing" },
+        { id: "referensi", label: "Referensi & Catatan", type: "notes", source: "notes" }
+      ],
+
+      /* ---------- A. Decision Wizard ---------- */
+      wizard: {
+        formula: "Skor opsi = Σ (skor jawaban × bobot kepentingan)\nSkor jawaban: −3 s/d +3 (dari KB_DATA)\nBobot kepentingan: 1–5 (diatur user)\nKriteria yang belum dijawab bernilai 0.",
+        steps: [
+          { id: "deployment", title: "Langkah 1 · Deployment", options: [
+            { id: "onprem", label: "On-Premise",
+              tradeoffs: ["Kontrol penuh atas data dan hardware, tetapi kapasitas harus direncanakan di muka.", "Biaya per unit bisa lebih murah untuk beban stabil, tetapi butuh CapEx dan tim operasional."],
+              risks: ["Over- atau under-provisioning saat beban berubah.", "Bergantung pada sedikit orang kunci untuk operasi harian."] },
+            { id: "cloud", label: "Cloud",
+              tradeoffs: ["Elastis dan cepat dimulai, tetapi biaya bisa membengkak tanpa praktik FinOps.", "Layanan managed mengurangi beban ops, tetapi menambah ketergantungan pada vendor."],
+              risks: ["Biaya egress dan query yang tidak terkontrol.", "Data residency harus dipastikan (pilih region lokal bila diwajibkan)."] },
+            { id: "hybrid", label: "Hybrid",
+              tradeoffs: ["Data sensitif tetap on-prem sementara beban elastis berjalan di cloud, tetapi arsitektur lebih kompleks."],
+              risks: ["Konektivitas (VPN/Interconnect) menjadi titik gagal.", "Dua set tooling, monitoring, dan kontrol keamanan."] }
+          ]},
+          { id: "licensing", title: "Langkah 2 · Licensing", options: [
+            { id: "oss", label: "Open Source",
+              tradeoffs: ["Tanpa biaya lisensi dan bebas lock-in, tetapi biaya engineering dan operasional lebih tinggi."],
+              risks: ["Support hanya dari komunitas kecuali membeli support pihak ketiga.", "Patch keamanan dan upgrade menjadi tanggung jawab tim."] },
+            { id: "enterprise", label: "Enterprise / Managed",
+              tradeoffs: ["Setup cepat dan ada SLA vendor, tetapi ada biaya berlangganan dan lock-in."],
+              risks: ["Kenaikan harga sepihak dari vendor.", "Fitur penting bisa terkunci di tier yang mahal."] }
+          ]},
+          { id: "provider", title: "Langkah 3 · Cloud provider", showIf: { step: "deployment", anyOf: ["cloud", "hybrid"] }, options: [
+            { id: "gcp", label: "GCP (BigQuery)",
+              tradeoffs: ["BigQuery serverless minim tuning, tetapi biaya on-demand per TB scan perlu dikendalikan."],
+              risks: ["Query tanpa partisi atau clustering bisa memicu tagihan besar."] },
+            { id: "aws", label: "AWS (Redshift/S3/Athena)",
+              tradeoffs: ["Ekosistem paling luas, tetapi banyak layanan harus dirangkai sendiri."],
+              risks: ["Kompleksitas IAM dan networking antar layanan."] },
+            { id: "azure", label: "Azure (Synapse/Fabric)",
+              tradeoffs: ["Integrasi kuat dengan Microsoft 365, Entra ID, dan Power BI, tetapi lini produk sedang bergeser ke Fabric."],
+              risks: ["Roadmap Synapse vs Fabric perlu dipantau (perlu diverifikasi)."] },
+            { id: "multi", label: "Snowflake / Databricks",
+              tradeoffs: ["Portabel lintas cloud dengan fitur kuat, tetapi ada biaya platform di atas biaya cloud."],
+              risks: ["Konsumsi kredit/DBU sulit diprediksi tanpa guardrail anggaran."] }
+          ]}
+        ],
+        criteria: [
+          { id: "setup", label: "Kemudahan setup yang dibutuhkan", help: "Seberapa penting platform bisa berjalan dengan effort minimal.", importance: 3, answers: [
+            { id: "tinggi", label: "Tinggi: harus cepat dan mudah", scores: { onprem: -3, cloud: 3, hybrid: -1, oss: -2, enterprise: 3, gcp: 3, aws: 1, azure: 1, multi: 2 } },
+            { id: "sedang", label: "Sedang", scores: { cloud: 1, enterprise: 1, gcp: 1, aws: 1, azure: 1, multi: 1 } },
+            { id: "rendah", label: "Rendah: siap effort besar", scores: { onprem: 1, hybrid: 1, oss: 2, enterprise: -1 } } ] },
+          { id: "cost", label: "Sensitivitas biaya", help: "Seberapa ketat anggaran untuk lisensi dan infrastruktur.", importance: 3, answers: [
+            { id: "sangat", label: "Sangat sensitif", scores: { onprem: 1, cloud: 1, hybrid: -1, oss: 3, enterprise: -2, gcp: 1, aws: 1, multi: -2 } },
+            { id: "sedang", label: "Sedang", scores: { oss: 1 } },
+            { id: "rendah", label: "Tidak sensitif", scores: { enterprise: 2, multi: 1 } } ] },
+          { id: "compliance", label: "Keamanan & compliance", help: "Data residency, regulasi sektor (misal keuangan, kesehatan), audit.", importance: 3, answers: [
+            { id: "ketat", label: "Ketat: data wajib di DC sendiri/negara tertentu", scores: { onprem: 3, cloud: -2, hybrid: 2, oss: 1, enterprise: 1, gcp: 1, aws: 1, azure: 1 } },
+            { id: "sedang", label: "Sedang: enkripsi, audit log, IAM", scores: { onprem: 1, cloud: 1, hybrid: 1, enterprise: 1 } },
+            { id: "ringan", label: "Ringan", scores: { onprem: -1, cloud: 2 } } ] },
+          { id: "volume", label: "Volume data", help: "Total data yang diolah dan disimpan dalam 12–24 bulan.", importance: 3, answers: [
+            { id: "gb", label: "GB", scores: { onprem: 1, cloud: 1, hybrid: -1, oss: 2, enterprise: -1, gcp: 1, multi: -1 } },
+            { id: "tb", label: "TB", scores: { cloud: 2, hybrid: 1, enterprise: 1, gcp: 1, aws: 1, azure: 1, multi: 1 } },
+            { id: "pb", label: "PB", scores: { onprem: -2, cloud: 3, hybrid: 1, oss: -1, enterprise: 2, gcp: 2, aws: 1, azure: 1, multi: 2 } } ] },
+          { id: "latency", label: "Real-time vs batch", help: "Seberapa segar data yang dibutuhkan pengguna.", importance: 3, answers: [
+            { id: "batch", label: "Batch harian", scores: { onprem: 1, cloud: 1, oss: 1 } },
+            { id: "micro", label: "Micro-batch (menit)", scores: { cloud: 1, hybrid: 1, enterprise: 1 } },
+            { id: "realtime", label: "Real-time (detik)", scores: { onprem: -1, cloud: 2, hybrid: 1, enterprise: 2, gcp: 2, aws: 2, azure: 1, multi: 2 } } ] },
+          { id: "team", label: "Ukuran tim & skill DevOps", help: "Kemampuan tim mengoperasikan infrastruktur sendiri.", importance: 3, answers: [
+            { id: "kecil", label: "Kecil, minim DevOps", scores: { onprem: -3, cloud: 3, hybrid: -2, oss: -2, enterprise: 3, gcp: 2, azure: 1, multi: 2 } },
+            { id: "sedang", label: "Sedang", scores: { cloud: 1, enterprise: 1 } },
+            { id: "besar", label: "Besar, DevOps kuat", scores: { onprem: 2, hybrid: 2, oss: 3, enterprise: -1, aws: 1 } } ] },
+          { id: "elastic", label: "Kebutuhan scalability / elastisitas", help: "Pola beban komputasi dari waktu ke waktu.", importance: 3, answers: [
+            { id: "stabil", label: "Stabil", scores: { onprem: 2, hybrid: 1, oss: 1 } },
+            { id: "musiman", label: "Musiman", scores: { onprem: -1, cloud: 2, hybrid: 2 } },
+            { id: "fluktuatif", label: "Sangat fluktuatif", scores: { onprem: -3, cloud: 3, hybrid: 1, enterprise: 1, gcp: 2, aws: 1, azure: 1, multi: 1 } } ] },
+          { id: "lockin", label: "Toleransi vendor lock-in", help: "Seberapa bisa diterima bila migrasi keluar dari vendor menjadi sulit.", importance: 3, answers: [
+            { id: "rendah", label: "Rendah: harus portabel", scores: { onprem: 2, cloud: -2, hybrid: 1, oss: 3, enterprise: -2, gcp: -1, aws: -1, azure: -1, multi: 3 } },
+            { id: "sedang", label: "Sedang", scores: { multi: 1 } },
+            { id: "tinggi", label: "Tinggi: tidak masalah", scores: { cloud: 2, enterprise: 2, gcp: 1, aws: 1, azure: 1 } } ] },
+          { id: "sla", label: "SLA / uptime", help: "Target ketersediaan platform data.", importance: 3, answers: [
+            { id: "s99", label: "99%", scores: { onprem: 1, oss: 1 } },
+            { id: "s999", label: "99,9%", scores: { cloud: 1, enterprise: 1 } },
+            { id: "s9995", label: "≥ 99,95%", scores: { onprem: -2, cloud: 2, hybrid: 1, oss: -2, enterprise: 3, gcp: 1, aws: 1, azure: 1, multi: 1 } } ] },
+          { id: "internal", label: "Latency rendah ke sistem internal", help: "Misal ERP atau core banking yang berada di data center sendiri.", importance: 3, answers: [
+            { id: "kritis", label: "Kritis", scores: { onprem: 3, cloud: -2, hybrid: 2 } },
+            { id: "moderat", label: "Moderat", scores: { hybrid: 1 } },
+            { id: "tidak", label: "Tidak penting", scores: { cloud: 1 } } ] },
+          { id: "budget", label: "Model anggaran: CapEx vs OpEx", help: "Preferensi pembelian aset di muka atau biaya berlangganan.", importance: 3, answers: [
+            { id: "capex", label: "CapEx", scores: { onprem: 3, cloud: -2, hybrid: 1, oss: 1 } },
+            { id: "campuran", label: "Campuran", scores: { hybrid: 2 } },
+            { id: "opex", label: "OpEx", scores: { onprem: -2, cloud: 3, enterprise: 1 } } ] },
+          { id: "support", label: "Kebutuhan support vendor", help: "Apakah perlu kontrak support dengan SLA respons.", importance: 3, answers: [
+            { id: "wajib", label: "Wajib 24/7", scores: { cloud: 1, oss: -2, enterprise: 3, azure: 1, multi: 1 } },
+            { id: "diinginkan", label: "Diinginkan", scores: { enterprise: 1 } },
+            { id: "komunitas", label: "Komunitas cukup", scores: { oss: 2, enterprise: -1 } } ] },
+          { id: "stack", label: "Integrasi dengan stack existing", help: "Ekosistem yang sudah dipakai organisasi.", importance: 3, answers: [
+            { id: "microsoft", label: "Microsoft (Entra ID, M365, SQL Server)", scores: { enterprise: 1, gcp: -1, azure: 3 } },
+            { id: "google", label: "Google (Workspace, GA4, Firebase)", scores: { gcp: 3, azure: -1 } },
+            { id: "aws", label: "Sudah memakai AWS", scores: { gcp: -1, aws: 3, azure: -1 } },
+            { id: "oss", label: "Linux & open source on-prem", scores: { onprem: 2, hybrid: 1, oss: 2 } },
+            { id: "campuran", label: "Campuran", scores: { hybrid: 1, multi: 2 } } ] },
+          { id: "dr", label: "Kebutuhan disaster recovery", help: "Target RPO/RTO dan kebutuhan lokasi cadangan.", importance: 3, answers: [
+            { id: "ketat", label: "Ketat (RTO < 1 jam, multi-region)", scores: { onprem: -2, cloud: 2, hybrid: 2, enterprise: 2, gcp: 1, aws: 1, azure: 1, multi: 1 } },
+            { id: "standar", label: "Standar (backup harian)", scores: { cloud: 1, hybrid: 1 } },
+            { id: "minimal", label: "Minimal", scores: { onprem: 1, oss: 1 } } ] },
+          { id: "ml", label: "Kebutuhan ML/AI & data science", help: "Seberapa besar beban feature engineering, training, dan notebook.", importance: 3, answers: [
+            { id: "tinggi", label: "Tinggi", scores: { cloud: 2, enterprise: 1, gcp: 2, aws: 1, azure: 1, multi: 3 } },
+            { id: "sedang", label: "Sedang", scores: { cloud: 1 } },
+            { id: "rendah", label: "Rendah", scores: { oss: 1 } } ] },
+          { id: "golive", label: "Target waktu go-live", help: "Kapan pipeline pertama harus berjalan di produksi.", importance: 3, answers: [
+            { id: "cepat", label: "< 1 bulan", scores: { onprem: -3, cloud: 3, hybrid: -2, oss: -1, enterprise: 2, gcp: 2, multi: 1 } },
+            { id: "menengah", label: "1–3 bulan", scores: { cloud: 1, enterprise: 1 } },
+            { id: "lama", label: "> 3 bulan", scores: { onprem: 1, hybrid: 1, oss: 1 } } ] },
+          { id: "sources", label: "Lokasi sumber data", help: "Di mana mayoritas sistem sumber berada.", importance: 3, answers: [
+            { id: "onprem", label: "Mayoritas on-prem", scores: { onprem: 2, cloud: -1, hybrid: 2 } },
+            { id: "campuran", label: "Campuran", scores: { hybrid: 3 } },
+            { id: "saas", label: "Mayoritas SaaS/cloud", scores: { onprem: -2, cloud: 3 } } ] }
+        ],
+        presets: [
+          { id: "easy-dw", label: "Data warehouse mudah setup, hemat, dan aman", desc: "Tim kecil, data TB, batch, compliance standar.",
+            answers: { setup: "tinggi", cost: "sangat", compliance: "sedang", volume: "tb", latency: "batch", team: "kecil", elastic: "musiman", lockin: "sedang", sla: "s999", internal: "tidak", budget: "opex", support: "diinginkan", dr: "standar", golive: "menengah", sources: "campuran" },
+            importance: { setup: 5, cost: 5, compliance: 4 } },
+          { id: "regulated", label: "Bank dengan regulasi ketat", desc: "Data residency wajib, core system di DC sendiri.",
+            answers: { setup: "rendah", cost: "sedang", compliance: "ketat", volume: "tb", latency: "micro", team: "besar", elastic: "stabil", lockin: "rendah", sla: "s9995", internal: "kritis", budget: "capex", support: "wajib", stack: "campuran", dr: "ketat", ml: "sedang", golive: "lama", sources: "onprem" },
+            importance: { compliance: 5, internal: 5, support: 5 } },
+          { id: "realtime", label: "Startup analitik real-time", desc: "Event streaming, beban fluktuatif, butuh cepat live.",
+            answers: { setup: "tinggi", cost: "sedang", compliance: "ringan", volume: "tb", latency: "realtime", team: "kecil", elastic: "fluktuatif", lockin: "sedang", sla: "s999", internal: "tidak", budget: "opex", support: "diinginkan", dr: "standar", ml: "tinggi", golive: "cepat", sources: "saas" },
+            importance: { latency: 5, elastic: 4, golive: 4 } },
+          { id: "oss-onprem", label: "Tim platform kuat, anti lock-in", desc: "Hemat lisensi, beban stabil, sumber on-prem.",
+            answers: { setup: "rendah", cost: "sangat", compliance: "sedang", volume: "tb", latency: "batch", team: "besar", elastic: "stabil", lockin: "rendah", sla: "s99", internal: "moderat", budget: "capex", support: "komunitas", stack: "oss", dr: "minimal", ml: "rendah", golive: "lama", sources: "onprem" },
+            importance: { lockin: 5, cost: 5, team: 4 } }
+        ]
+      },
+
+      /* ---------- B. Tool Explorer ---------- */
+      tools: {
+        providers: { gcp: "GCP", aws: "AWS", azure: "Azure", multi: "Multi-cloud" },
+        categories: [
+          { id: "ingestion", label: "Source / Ingestion", short: "Ingestion", flow: "main", flowOrder: 1, desc: "Menarik data dari sistem sumber (batch, CDC, streaming)." },
+          { id: "orchestrator", label: "Orchestrator", short: "Orchestrator", flow: "support", flowOrder: 1, desc: "Menjadwalkan dan mengatur dependensi job." },
+          { id: "transformation", label: "Transformation", short: "Transformation", flow: "main", flowOrder: 3, desc: "Membersihkan, menggabungkan, dan memodelkan data." },
+          { id: "warehouse", label: "Data Warehouse / Lakehouse", short: "Warehouse", flow: "main", flowOrder: 4, desc: "Tempat query analitik. Cloud dan on-prem ada di sini; gunakan filter Lingkungan." },
+          { id: "storage", label: "Storage", short: "Storage / Lake", flow: "main", flowOrder: 2, desc: "Object storage dan format tabel untuk data lake." },
+          { id: "cicd", label: "CI/CD", short: "CI/CD", flow: "support", flowOrder: 5, desc: "Test dan deploy kode pipeline secara otomatis." },
+          { id: "vcs", label: "Version Control", short: "Version control", flow: "support", flowOrder: 6, desc: "Repositori kode pipeline, SQL, dan infrastruktur." },
+          { id: "monitoring", label: "Monitoring / Observability", short: "Monitoring", flow: "support", flowOrder: 3, desc: "Metrik, log, trace, dan alert untuk pipeline dan infra." },
+          { id: "quality", label: "Data Quality", short: "Data quality", flow: "support", flowOrder: 2, desc: "Validasi isi data: null, duplikat, freshness, anomali." },
+          { id: "catalog", label: "Data Catalog / Governance", short: "Catalog", flow: "support", flowOrder: 4, desc: "Metadata, lineage, kepemilikan, dan kontrol akses." },
+          { id: "bi", label: "BI / Visualization", short: "BI", flow: "main", flowOrder: 5, desc: "Dashboard dan self-service analytics." },
+          { id: "infra", label: "Infrastruktur / Container", short: "Infra", flow: "support", flowOrder: 7, desc: "Runtime, orkestrasi container, dan infrastructure as code." }
+        ],
+        items: [
+          // Source / Ingestion
+          { id: "airbyte", cat: "ingestion", name: "Airbyte", license: "Open Source", env: "Keduanya", provider: null, setup: "Sedang", cost: "Gratis (self-hosted); Airbyte Cloud berbasis kredit/kapasitas.", useCase: "ELT dari ratusan SaaS dan database ke warehouse.", pros: ["Ratusan konektor siap pakai", "Bisa self-hosted di Kubernetes"], cons: ["Kualitas konektor komunitas bervariasi", "Butuh resource cukup besar saat self-hosted"], verify: true, updated: "2026-11-14" },
+          { id: "fivetran", cat: "ingestion", name: "Fivetran", license: "Enterprise", env: "Cloud", provider: null, setup: "Rendah", cost: "Berbasis Monthly Active Rows (MAR).", useCase: "Tim kecil yang butuh ELT tanpa maintenance.", pros: ["Konektor stabil, schema drift ditangani otomatis", "Hampir tanpa maintenance"], cons: ["Biaya naik tajam pada volume besar", "Kontrol atas proses ekstraksi terbatas"], verify: true, updated: "2026-11-14" },
+          { id: "debezium", cat: "ingestion", name: "Debezium", license: "Open Source", env: "Keduanya", provider: null, setup: "Tinggi", cost: "Gratis; biaya infrastruktur Kafka/Kafka Connect.", useCase: "CDC real-time dari PostgreSQL, MySQL, SQL Server, Oracle.", pros: ["CDC berbasis log, latensi rendah", "Tidak membebani query di sumber"], cons: ["Umumnya butuh Kafka Connect", "Operasional cukup rumit"], verify: false, updated: "2026-11-14" },
+          { id: "kafka", cat: "ingestion", name: "Apache Kafka", license: "Open Source", env: "Keduanya", provider: null, setup: "Tinggi", cost: "Gratis; managed (Confluent, MSK) per throughput dan storage.", useCase: "Event streaming dan backbone real-time.", pros: ["Throughput sangat tinggi, bisa replay", "Ekosistem konektor luas"], cons: ["Operasional kompleks", "Butuh skill khusus untuk tuning"], verify: true, updated: "2026-11-14" },
+          { id: "nifi", cat: "ingestion", name: "Apache NiFi", license: "Open Source", env: "Keduanya", provider: null, setup: "Sedang", cost: "Gratis.", useCase: "Integrasi file dan protokol beragam di lingkungan on-prem.", pros: ["UI drag-and-drop dengan data provenance", "Cocok untuk sumber legacy (SFTP, JMS)"], cons: ["Versioning flow kurang nyaman untuk GitOps", "Scale-out butuh tuning"], verify: false, updated: "2026-11-14" },
+          { id: "datastream", cat: "ingestion", name: "Google Datastream", license: "Enterprise", env: "Cloud", provider: "gcp", setup: "Rendah", cost: "Per GB data yang diproses.", useCase: "CDC serverless dari database ke BigQuery.", pros: ["Serverless, langsung ke BigQuery", "Setup cepat"], cons: ["Terbatas pada sumber yang didukung", "Lock-in GCP"], verify: true, updated: "2026-11-14" },
+          { id: "awsdms", cat: "ingestion", name: "AWS DMS", license: "Enterprise", env: "Cloud", provider: "aws", setup: "Sedang", cost: "Per jam instance replikasi atau DCU serverless.", useCase: "Migrasi dan CDC ke S3 atau Redshift.", pros: ["Mendukung banyak engine sumber", "Terintegrasi dengan ekosistem AWS"], cons: ["Debugging task sering sulit", "Lock-in AWS"], verify: true, updated: "2026-11-14" },
+          { id: "adf", cat: "ingestion", name: "Azure Data Factory", license: "Enterprise", env: "Cloud", provider: "azure", setup: "Rendah", cost: "Per aktivitas dan jam integration runtime.", useCase: "Ingestion low-code di Azure, termasuk dari on-prem lewat Self-hosted IR.", pros: ["Banyak konektor, Self-hosted IR untuk sumber on-prem", "Low-code"], cons: ["Definisi pipeline JSON sulit di-review", "Lock-in Azure"], verify: true, updated: "2026-11-14" },
+          // Orchestrator
+          { id: "airflow", cat: "orchestrator", name: "Apache Airflow", license: "Open Source", env: "Keduanya", provider: null, setup: "Sedang", cost: "Gratis; managed via Cloud Composer, MWAA, atau Astronomer.", useCase: "Standar industri untuk orkestrasi batch berbasis DAG Python.", pros: ["Komunitas dan provider sangat besar", "Banyak opsi managed"], cons: ["Scheduler dan metadata DB perlu dirawat", "Kurang data-aware dibanding Dagster"], verify: false, updated: "2026-11-14" },
+          { id: "dagster", cat: "orchestrator", name: "Dagster", license: "Open Source", env: "Keduanya", provider: null, setup: "Sedang", cost: "Gratis (OSS); Dagster+ berlangganan.", useCase: "Orkestrasi berbasis aset data dengan lineage bawaan.", pros: ["Konsep software-defined assets", "Testing lokal yang baik"], cons: ["Kurva belajar konsep aset", "Komunitas lebih kecil dari Airflow"], verify: true, updated: "2026-11-14" },
+          { id: "prefect", cat: "orchestrator", name: "Prefect", license: "Open Source", env: "Keduanya", provider: null, setup: "Rendah", cost: "Gratis (OSS); Prefect Cloud berlangganan.", useCase: "Workflow Python dinamis dengan setup ringan.", pros: ["API Pythonic dengan dekorator sederhana", "Setup cepat"], cons: ["Perubahan besar antar versi mayor", "Fitur kolaborasi tim di tier berbayar"], verify: true, updated: "2026-11-14" },
+          { id: "mage", cat: "orchestrator", name: "Mage", license: "Open Source", env: "Keduanya", provider: null, setup: "Rendah", cost: "Gratis (OSS); Mage Pro berbayar.", useCase: "Tim kecil yang ingin pipeline bergaya notebook.", pros: ["UI interaktif, cepat dicoba", "Blok Python, SQL, dan R"], cons: ["Adopsi enterprise lebih kecil", "Kurang teruji untuk ratusan DAG"], verify: true, updated: "2026-11-14" },
+          { id: "composer", cat: "orchestrator", name: "Cloud Composer", license: "Enterprise", env: "Cloud", provider: "gcp", setup: "Rendah", cost: "Per jam environment ditambah resource komputasi.", useCase: "Airflow managed di GCP.", pros: ["Airflow tanpa mengelola infrastruktur", "Integrasi IAM GCP"], cons: ["Biaya minimum environment cukup tinggi", "Jadwal upgrade mengikuti Google"], verify: true, updated: "2026-11-14" },
+          { id: "mwaa", cat: "orchestrator", name: "Amazon MWAA", license: "Enterprise", env: "Cloud", provider: "aws", setup: "Rendah", cost: "Per jam environment ditambah worker.", useCase: "Airflow managed di AWS.", pros: ["Integrasi IAM dan VPC AWS", "Tanpa mengelola scheduler"], cons: ["Ada biaya dasar walau idle", "Versi Airflow bisa tertinggal dari upstream"], verify: true, updated: "2026-11-14" },
+          // Transformation
+          { id: "dbtcore", cat: "transformation", name: "dbt Core", license: "Open Source", env: "Keduanya", provider: null, setup: "Rendah", cost: "Gratis.", useCase: "Transformasi SQL modular di warehouse (ELT).", pros: ["Testing, dokumentasi, dan lineage bawaan", "Adapter untuk banyak warehouse"], cons: ["Fokus SQL/Jinja, model Python terbatas", "Butuh orchestrator dan CI sendiri"], verify: false, updated: "2026-11-14" },
+          { id: "dbtcloud", cat: "transformation", name: "dbt Cloud", license: "Enterprise", env: "Cloud", provider: null, setup: "Rendah", cost: "Per seat ditambah pemakaian model run.", useCase: "Tim analytics engineering yang ingin IDE dan scheduler managed.", pros: ["IDE web, scheduler, dan CI bawaan", "Semantic layer"], cons: ["Biaya per seat", "Butuh akses jaringan ke warehouse"], verify: true, updated: "2026-11-14" },
+          { id: "spark", cat: "transformation", name: "Apache Spark", license: "Open Source", env: "Keduanya", provider: null, setup: "Tinggi", cost: "Gratis; managed via Databricks, EMR, atau Dataproc.", useCase: "Transformasi skala TB–PB, batch dan streaming.", pros: ["Skala horizontal sangat besar", "API Python, SQL, dan Scala"], cons: ["Tuning memori dan shuffle rumit", "Berlebihan untuk data kecil"], verify: false, updated: "2026-11-14" },
+          { id: "sqlmesh", cat: "transformation", name: "SQLMesh", license: "Open Source", env: "Keduanya", provider: null, setup: "Sedang", cost: "Gratis.", useCase: "Transformasi SQL dengan virtual environment dan alur plan/apply.", pros: ["Deteksi breaking change otomatis", "Bisa membaca proyek dbt"], cons: ["Komunitas lebih kecil", "Integrasi tool lain belum seluas dbt"], verify: true, updated: "2026-11-14" },
+          { id: "dataform", cat: "transformation", name: "Dataform", license: "Enterprise", env: "Cloud", provider: "gcp", setup: "Rendah", cost: "Tanpa biaya terpisah; membayar query BigQuery.", useCase: "Transformasi SQLX native di BigQuery.", pros: ["Terintegrasi di konsol BigQuery", "Tanpa infrastruktur tambahan"], cons: ["Hanya untuk BigQuery", "Ekosistem paket kecil"], verify: true, updated: "2026-11-14" },
+          { id: "glue", cat: "transformation", name: "AWS Glue", license: "Enterprise", env: "Cloud", provider: "aws", setup: "Sedang", cost: "Per DPU-jam.", useCase: "ETL Spark serverless di AWS.", pros: ["Spark serverless, terintegrasi Glue Catalog", "Tanpa mengelola cluster"], cons: ["Cold start dan debugging lambat", "Lock-in AWS"], verify: true, updated: "2026-11-14" },
+          // Data Warehouse / Lakehouse
+          { id: "bigquery", cat: "warehouse", name: "BigQuery", license: "Enterprise", env: "Cloud", provider: "gcp", setup: "Rendah", cost: "On-demand per TB scan atau kapasitas (slot).", useCase: "Warehouse serverless untuk analitik ad-hoc skala besar.", pros: ["Serverless, hampir tanpa tuning", "Skala PB, ada BigQuery ML"], cons: ["Biaya on-demand sulit diprediksi", "Lock-in GCP"], verify: true, updated: "2026-11-14" },
+          { id: "redshift", cat: "warehouse", name: "Amazon Redshift", license: "Enterprise", env: "Cloud", provider: "aws", setup: "Sedang", cost: "Per jam node (RA3) atau Serverless per RPU-jam.", useCase: "Warehouse di ekosistem AWS dengan beban terprediksi.", pros: ["Integrasi S3 (Spectrum) dan IAM", "Reserved instance hemat untuk beban stabil"], cons: ["Perlu tuning sort key dan distribution key", "Concurrency scaling berbiaya"], verify: true, updated: "2026-11-14" },
+          { id: "snowflake", cat: "warehouse", name: "Snowflake", license: "Enterprise", env: "Cloud", provider: "multi", setup: "Rendah", cost: "Kredit compute per detik ditambah storage.", useCase: "Warehouse multi-cloud dengan pemisahan compute dan storage.", pros: ["Multi-cloud dan data sharing", "Minim tuning, auto-suspend"], cons: ["Konsumsi kredit bisa melonjak", "Tidak tersedia on-prem"], verify: true, updated: "2026-11-14" },
+          { id: "synapse", cat: "warehouse", name: "Azure Synapse / Fabric", license: "Enterprise", env: "Cloud", provider: "azure", setup: "Sedang", cost: "Synapse: DWU atau serverless per TB; Fabric: kapasitas F-SKU.", useCase: "Analitik di ekosistem Microsoft bersama Power BI.", pros: ["Integrasi Power BI dan Entra ID", "OneLake terpadu di Fabric"], cons: ["Transisi Synapse ke Fabric (perlu diverifikasi)", "Struktur SKU kompleks"], verify: true, updated: "2026-11-14" },
+          { id: "databricks", cat: "warehouse", name: "Databricks", license: "Enterprise", env: "Cloud", provider: "multi", setup: "Sedang", cost: "DBU per jam ditambah biaya VM cloud.", useCase: "Lakehouse untuk data engineering dan ML.", pros: ["Spark terkelola, Delta Lake, Unity Catalog", "Kuat untuk ML/AI"], cons: ["Biaya ganda: DBU dan VM", "Butuh cluster policy yang disiplin"], verify: true, updated: "2026-11-14" },
+          { id: "clickhouse", cat: "warehouse", name: "ClickHouse", license: "Open Source", env: "Keduanya", provider: null, setup: "Sedang", cost: "Gratis (self-hosted); ClickHouse Cloud berbayar.", useCase: "OLAP real-time yang sangat cepat untuk event dan log.", pros: ["Query agregasi sangat cepat", "Kompresi kolumnar tinggi"], cons: ["JOIN besar dan UPDATE kurang ideal", "Operasional cluster butuh keahlian"], verify: true, updated: "2026-11-14" },
+          { id: "postgres", cat: "warehouse", name: "PostgreSQL", license: "Open Source", env: "Keduanya", provider: null, setup: "Rendah", cost: "Gratis; managed: Cloud SQL, RDS, Azure Database.", useCase: "Warehouse kecil (di bawah ~1 TB) sekaligus OLTP.", pros: ["Matang, ekosistem ekstensi luas", "Mudah dioperasikan"], cons: ["Row-store: lambat untuk scan analitik besar", "Scale-out butuh ekstensi seperti Citus"], verify: false, updated: "2026-11-14" },
+          { id: "greenplum", cat: "warehouse", name: "Greenplum", license: "Enterprise", env: "On-Prem", provider: null, setup: "Tinggi", cost: "Lisensi komersial; repositori open-source lama telah diarsipkan.", useCase: "MPP berbasis PostgreSQL untuk warehouse on-prem besar.", pros: ["MPP, kompatibel dengan PostgreSQL", "Lama dipakai di enterprise"], cons: ["Status open-source berubah sejak 2024 (perlu diverifikasi); pertimbangkan fork Apache Cloudberry", "Berbasis PostgreSQL versi lama"], verify: true, updated: "2026-11-14" },
+          { id: "doris", cat: "warehouse", name: "Apache Doris", license: "Open Source", env: "Keduanya", provider: null, setup: "Sedang", cost: "Gratis; managed: VeloDB.", useCase: "OLAP real-time dengan protokol MySQL.", pros: ["Kompatibel protokol MySQL", "Dukungan update dan join cukup baik"], cons: ["Komunitas global lebih kecil", "Sebagian materi komunitas berbahasa Mandarin"], verify: true, updated: "2026-11-14" },
+          { id: "starrocks", cat: "warehouse", name: "StarRocks", license: "Open Source", env: "Keduanya", provider: null, setup: "Sedang", cost: "Gratis; managed: CelerData.", useCase: "OLAP cepat langsung di atas data lake (Iceberg, Hive).", pros: ["Vectorized engine, join cepat", "Query langsung ke Iceberg, Hudi, Delta"], cons: ["Perlu memahami arsitektur FE/BE", "Ekosistem lebih kecil"], verify: true, updated: "2026-11-14" },
+          { id: "trino", cat: "warehouse", name: "Trino + Hive Metastore", license: "Open Source", env: "Keduanya", provider: null, setup: "Tinggi", cost: "Gratis; managed: Starburst.", useCase: "Query federasi di atas data lake on-prem.", pros: ["Query lintas sumber (federation)", "Compute terpisah dari storage"], cons: ["Banyak komponen: Trino, metastore, object storage", "Fault-tolerant execution perlu konfigurasi khusus"], verify: true, updated: "2026-11-14" },
+          // Storage
+          { id: "minio", cat: "storage", name: "MinIO", license: "Open Source", env: "On-Prem", provider: null, setup: "Sedang", cost: "Gratis (AGPL); edisi enterprise berlangganan.", useCase: "Object storage S3-compatible di data center sendiri.", pros: ["API kompatibel S3", "Performa tinggi"], cons: ["Perubahan fitur edisi komunitas (perlu diverifikasi)", "Erasure coding butuh perencanaan disk"], verify: true, updated: "2026-11-14" },
+          { id: "ceph", cat: "storage", name: "Ceph", license: "Open Source", env: "On-Prem", provider: null, setup: "Tinggi", cost: "Gratis.", useCase: "Object, block, dan file storage terpadu skala besar.", pros: ["Sangat skalabel, S3 lewat RGW", "Satu cluster untuk block, file, dan object"], cons: ["Operasional kompleks", "Butuh beberapa node dan jaringan cepat"], verify: false, updated: "2026-11-14" },
+          { id: "hdfs", cat: "storage", name: "HDFS", license: "Open Source", env: "On-Prem", provider: null, setup: "Tinggi", cost: "Gratis.", useCase: "Cluster Hadoop yang sudah ada.", pros: ["Matang, mendukung data locality", "Integrasi ekosistem Hadoop"], cons: ["Masalah small files dan NameNode", "Tren bergeser ke object storage"], verify: false, updated: "2026-11-14" },
+          { id: "s3", cat: "storage", name: "Amazon S3", license: "Enterprise", env: "Cloud", provider: "aws", setup: "Rendah", cost: "Per GB-bulan ditambah request dan egress.", useCase: "Data lake di AWS.", pros: ["Durabilitas sangat tinggi", "Storage class bertingkat"], cons: ["Biaya egress dan request", "Lock-in AWS"], verify: true, updated: "2026-11-14" },
+          { id: "gcs", cat: "storage", name: "Google Cloud Storage", license: "Enterprise", env: "Cloud", provider: "gcp", setup: "Rendah", cost: "Per GB-bulan ditambah operasi dan egress.", useCase: "Data lake di GCP, external table untuk BigQuery.", pros: ["Integrasi BigQuery dan Dataproc", "Storage class bertingkat"], cons: ["Biaya egress", "Lock-in GCP"], verify: true, updated: "2026-11-14" },
+          { id: "adls", cat: "storage", name: "Azure Data Lake Storage Gen2", license: "Enterprise", env: "Cloud", provider: "azure", setup: "Rendah", cost: "Per GB-bulan ditambah transaksi.", useCase: "Data lake di Azure dengan hierarchical namespace.", pros: ["ACL tingkat folder", "Integrasi Synapse, Fabric, dan Databricks"], cons: ["Model harga transaksi rumit", "Lock-in Azure"], verify: true, updated: "2026-11-14" },
+          { id: "iceberg", cat: "storage", name: "Apache Iceberg", license: "Open Source", env: "Keduanya", provider: null, setup: "Sedang", cost: "Gratis (format tabel).", useCase: "Format tabel terbuka untuk lakehouse multi-engine.", pros: ["ACID, time travel, schema evolution", "Dibaca banyak engine: Spark, Trino, Snowflake, BigQuery"], cons: ["Butuh catalog (REST, Hive, atau Glue)", "Perlu maintenance: compaction dan expire snapshot"], verify: false, updated: "2026-11-14" },
+          { id: "delta", cat: "storage", name: "Delta Lake", license: "Open Source", env: "Keduanya", provider: null, setup: "Sedang", cost: "Gratis (format tabel).", useCase: "Format tabel lakehouse, terutama di ekosistem Spark/Databricks.", pros: ["ACID dan time travel", "Integrasi Spark sangat matang"], cons: ["Dukungan engine non-Spark masih berkembang", "Fitur tertentu lebih lengkap di Databricks"], verify: true, updated: "2026-11-14" },
+          // CI/CD
+          { id: "gha", cat: "cicd", name: "GitHub Actions", license: "Enterprise", env: "Keduanya", provider: null, setup: "Rendah", cost: "Kuota menit gratis per bulan, lalu per menit; self-hosted runner tersedia.", useCase: "Repo di GitHub: CI untuk dbt, Terraform, dan test Python.", pros: ["Marketplace action sangat luas", "Self-hosted runner untuk jaringan internal"], cons: ["Butuh repo di GitHub", "Biaya runner besar bisa naik"], verify: true, updated: "2026-11-14" },
+          { id: "gitlabci", cat: "cicd", name: "GitLab CI", license: "Open Source", env: "Keduanya", provider: null, setup: "Sedang", cost: "Edisi CE gratis (self-managed); SaaS per seat.", useCase: "Satu platform repo, CI, dan registry; cocok on-prem.", pros: ["Bisa sepenuhnya self-managed", "Repo, CI, dan registry dalam satu tempat"], cons: ["Instance self-managed butuh resource", "Fitur keamanan lanjutan di tier berbayar"], verify: true, updated: "2026-11-14" },
+          { id: "bbpipelines", cat: "cicd", name: "Bitbucket Pipelines", license: "Enterprise", env: "Cloud", provider: null, setup: "Rendah", cost: "Kuota menit build per bulan sesuai paket.", useCase: "Tim yang sudah memakai Jira dan Bitbucket Cloud.", pros: ["Integrasi Jira", "Konfigurasi YAML sederhana"], cons: ["Hanya untuk repo Bitbucket", "Ekosistem pipe lebih kecil"], verify: true, updated: "2026-11-14" },
+          { id: "jenkins", cat: "cicd", name: "Jenkins", license: "Open Source", env: "Keduanya", provider: null, setup: "Tinggi", cost: "Gratis; biaya infrastruktur dan maintenance.", useCase: "Lingkungan on-prem dengan kebutuhan kustom tinggi.", pros: ["Plugin sangat banyak", "Kontrol penuh"], cons: ["Maintenance plugin dan keamanan berat", "Pengalaman konfigurasi kurang modern"], verify: false, updated: "2026-11-14" },
+          { id: "woodpecker", cat: "cicd", name: "Gitea Actions / Woodpecker CI", license: "Open Source", env: "On-Prem", provider: null, setup: "Rendah", cost: "Gratis.", useCase: "CI ringan untuk Gitea atau Forgejo self-hosted.", pros: ["Ringan dan mudah di-host", "Gitea Actions sebagian kompatibel dengan sintaks GitHub Actions"], cons: ["Fitur enterprise terbatas", "Komunitas kecil"], verify: true, updated: "2026-11-14" },
+          // Version Control
+          { id: "github", cat: "vcs", name: "GitHub", license: "Enterprise", env: "Keduanya", provider: null, setup: "Rendah", cost: "Gratis hingga per seat; GitHub Enterprise Server untuk on-prem.", useCase: "Kolaborasi kode dengan ekosistem terbesar.", pros: ["Ekosistem dan integrasi terluas", "Code review dan keamanan supply chain"], cons: ["Server on-prem butuh lisensi Enterprise", "Fitur keamanan lanjutan berbayar"], verify: true, updated: "2026-11-14" },
+          { id: "gitlab", cat: "vcs", name: "GitLab", license: "Open Source", env: "Keduanya", provider: null, setup: "Sedang", cost: "CE gratis; Premium/Ultimate per seat.", useCase: "Self-managed repo untuk organisasi yang wajib on-prem.", pros: ["Self-managed penuh", "CI/CD terintegrasi"], cons: ["Instance besar butuh tuning", "Banyak fitur di tier berbayar"], verify: true, updated: "2026-11-14" },
+          { id: "bitbucket", cat: "vcs", name: "Bitbucket", license: "Enterprise", env: "Keduanya", provider: null, setup: "Rendah", cost: "Per seat; Data Center untuk on-prem.", useCase: "Organisasi yang memakai Jira dan Confluence.", pros: ["Integrasi Atlassian", "Permission per branch"], cons: ["Ekosistem integrasi lebih kecil", "Roadmap Data Center perlu dicek (perlu diverifikasi)"], verify: true, updated: "2026-11-14" },
+          { id: "gitea", cat: "vcs", name: "Gitea / Forgejo", license: "Open Source", env: "On-Prem", provider: null, setup: "Rendah", cost: "Gratis.", useCase: "Git server ringan untuk jaringan internal.", pros: ["Sangat ringan, satu binary", "Mudah dipasang"], cons: ["Fitur enterprise terbatas", "Integrasi pihak ketiga lebih sedikit"], verify: false, updated: "2026-11-14" },
+          // Monitoring / Observability
+          { id: "promgraf", cat: "monitoring", name: "Prometheus + Grafana", license: "Open Source", env: "Keduanya", provider: null, setup: "Sedang", cost: "Gratis; Grafana Cloud berbayar.", useCase: "Metrik infrastruktur dan pipeline dengan alerting.", pros: ["Standar de facto metrik", "Dashboard fleksibel"], cons: ["Retensi jangka panjang butuh Thanos/Mimir", "Log dan trace butuh komponen lain"], verify: false, updated: "2026-11-14" },
+          { id: "datadog", cat: "monitoring", name: "Datadog", license: "Enterprise", env: "Cloud", provider: null, setup: "Rendah", cost: "Per host, per GB log, dan per fitur.", useCase: "Observability terpadu tanpa mengelola infrastruktur.", pros: ["Metrik, log, dan trace dalam satu tempat", "Integrasi sangat banyak"], cons: ["Biaya tumbuh cepat", "Lock-in format dan agent"], verify: true, updated: "2026-11-14" },
+          { id: "otel", cat: "monitoring", name: "OpenTelemetry", license: "Open Source", env: "Keduanya", provider: null, setup: "Sedang", cost: "Gratis.", useCase: "Standar instrumentasi trace, metrik, dan log yang netral vendor.", pros: ["Netral vendor", "Didukung semua backend besar"], cons: ["Hanya instrumentasi; backend terpisah", "Konfigurasi collector cukup detail"], verify: false, updated: "2026-11-14" },
+          { id: "opensearch", cat: "monitoring", name: "OpenSearch", license: "Open Source", env: "Keduanya", provider: null, setup: "Sedang", cost: "Gratis; managed di AWS.", useCase: "Log terpusat dan pencarian.", pros: ["Pencarian log full-text", "Dashboard bawaan"], cons: ["Boros storage tanpa ILM", "Tuning shard perlu keahlian"], verify: false, updated: "2026-11-14" },
+          { id: "montecarlo", cat: "monitoring", name: "Monte Carlo", license: "Enterprise", env: "Cloud", provider: null, setup: "Rendah", cost: "Kontrak tahunan berbasis jumlah tabel/volume.", useCase: "Data observability: freshness, volume, dan anomali schema.", pros: ["Deteksi anomali otomatis", "Lineage untuk analisis dampak"], cons: ["Mahal untuk tim kecil", "Data harus di warehouse yang didukung"], verify: true, updated: "2026-11-14" },
+          { id: "cloudmon", cat: "monitoring", name: "Monitoring native cloud", license: "Enterprise", env: "Cloud", provider: null, setup: "Rendah", cost: "Per metrik, log, dan alert sesuai provider.", useCase: "CloudWatch, Cloud Monitoring, atau Azure Monitor untuk layanan managed.", pros: ["Langsung tersedia untuk layanan managed", "Tanpa agent tambahan"], cons: ["Tampilan lintas cloud terpisah", "Biaya log bisa besar"], verify: true, updated: "2026-11-14" },
+          // Data Quality
+          { id: "gx", cat: "quality", name: "Great Expectations", license: "Open Source", env: "Keduanya", provider: null, setup: "Sedang", cost: "Gratis; GX Cloud berbayar.", useCase: "Validasi data dengan expectation dan laporan Data Docs.", pros: ["Pustaka expectation luas", "Laporan validasi yang mudah dibaca"], cons: ["Konfigurasi cukup verbose", "API berubah antar versi mayor"], verify: true, updated: "2026-11-14" },
+          { id: "soda", cat: "quality", name: "Soda Core", license: "Open Source", env: "Keduanya", provider: null, setup: "Rendah", cost: "Gratis; Soda Cloud berbayar.", useCase: "Check data berbasis YAML (SodaCL).", pros: ["Sintaks check sederhana", "Mudah dijalankan di CI"], cons: ["Fitur kolaborasi di versi berbayar", "Anomali lanjutan butuh Soda Cloud"], verify: true, updated: "2026-11-14" },
+          { id: "dbttests", cat: "quality", name: "dbt tests", license: "Open Source", env: "Keduanya", provider: null, setup: "Rendah", cost: "Gratis (bagian dari dbt).", useCase: "Test unique, not_null, relationships langsung di model dbt.", pros: ["Tanpa tool tambahan", "Hidup bersama kode model"], cons: ["Hanya untuk data yang dimodelkan dbt", "Deteksi anomali terbatas"], verify: false, updated: "2026-11-14" },
+          { id: "deequ", cat: "quality", name: "Deequ / PyDeequ", license: "Open Source", env: "Keduanya", provider: null, setup: "Sedang", cost: "Gratis.", useCase: "Validasi data skala besar di Spark.", pros: ["Skala besar karena berjalan di Spark", "Profiling dan saran constraint"], cons: ["Butuh Spark", "Rilis PyDeequ lebih jarang"], verify: true, updated: "2026-11-14" },
+          { id: "elementary", cat: "quality", name: "Elementary", license: "Open Source", env: "Keduanya", provider: null, setup: "Rendah", cost: "Gratis (OSS); Elementary Cloud berbayar.", useCase: "Observability dan anomaly detection native dbt.", pros: ["Langsung dari artefak dbt", "Laporan dan alert ke Slack"], cons: ["Butuh dbt", "Fitur lanjutan di versi Cloud"], verify: true, updated: "2026-11-14" },
+          // Data Catalog / Governance
+          { id: "datahub", cat: "catalog", name: "DataHub", license: "Open Source", env: "Keduanya", provider: null, setup: "Tinggi", cost: "Gratis; managed DataHub Cloud.", useCase: "Catalog dan lineage skala enterprise.", pros: ["Lineage kolom dan banyak konektor", "Komunitas aktif"], cons: ["Banyak komponen (Kafka, Elasticsearch, DB)", "Operasional berat"], verify: true, updated: "2026-11-14" },
+          { id: "openmetadata", cat: "catalog", name: "OpenMetadata", license: "Open Source", env: "Keduanya", provider: null, setup: "Sedang", cost: "Gratis; managed oleh Collate.", useCase: "Catalog, glossary, dan data quality dalam satu UI.", pros: ["Arsitektur lebih ringkas", "Fitur quality dan glossary bawaan"], cons: ["Ekosistem lebih muda", "Upgrade versi perlu diuji"], verify: true, updated: "2026-11-14" },
+          { id: "atlas", cat: "catalog", name: "Apache Atlas", license: "Open Source", env: "On-Prem", provider: null, setup: "Tinggi", cost: "Gratis.", useCase: "Governance di ekosistem Hadoop.", pros: ["Integrasi Hive dan Ranger", "Klasifikasi dan lineage"], cons: ["UI kurang modern", "Pengembangan melambat"], verify: true, updated: "2026-11-14" },
+          { id: "unity", cat: "catalog", name: "Unity Catalog (Databricks)", license: "Enterprise", env: "Cloud", provider: "multi", setup: "Rendah", cost: "Termasuk dalam platform Databricks.", useCase: "Governance terpusat untuk workspace Databricks.", pros: ["Kontrol akses dan lineage terpadu", "Ada versi open-source untuk interoperabilitas"], cons: ["Fitur penuh hanya di Databricks", "Migrasi dari Hive metastore perlu rencana"], verify: true, updated: "2026-11-14" },
+          { id: "dataplex", cat: "catalog", name: "Dataplex", license: "Enterprise", env: "Cloud", provider: "gcp", setup: "Rendah", cost: "Per pemrosesan dan metadata.", useCase: "Catalog dan governance di GCP.", pros: ["Integrasi BigQuery dan GCS", "Data profiling dan quality scan"], cons: ["Fokus ekosistem GCP", "Fitur bergerak cepat (perlu diverifikasi)"], verify: true, updated: "2026-11-14" },
+          { id: "purview", cat: "catalog", name: "Microsoft Purview", license: "Enterprise", env: "Cloud", provider: "azure", setup: "Sedang", cost: "Per kapasitas data map dan pemindaian.", useCase: "Governance di ekosistem Microsoft.", pros: ["Integrasi Fabric dan M365", "Label sensitivitas"], cons: ["Model biaya kompleks", "Konektor non-Microsoft terbatas"], verify: true, updated: "2026-11-14" },
+          { id: "gluecatalog", cat: "catalog", name: "AWS Glue Data Catalog", license: "Enterprise", env: "Cloud", provider: "aws", setup: "Rendah", cost: "Per objek tersimpan dan request.", useCase: "Metastore untuk Athena, EMR, dan Redshift Spectrum.", pros: ["Metastore serverless", "Integrasi Lake Formation"], cons: ["Fitur discovery terbatas", "Lock-in AWS"], verify: true, updated: "2026-11-14" },
+          { id: "collibra", cat: "catalog", name: "Collibra", license: "Enterprise", env: "Cloud", provider: null, setup: "Tinggi", cost: "Lisensi enterprise tahunan.", useCase: "Governance enterprise lintas sistem dengan workflow stewardship.", pros: ["Workflow governance matang", "Glossary bisnis kuat"], cons: ["Mahal", "Implementasi panjang"], verify: true, updated: "2026-11-14" },
+          // BI / Visualization
+          { id: "superset", cat: "bi", name: "Apache Superset", license: "Open Source", env: "Keduanya", provider: null, setup: "Sedang", cost: "Gratis; managed via Preset.", useCase: "Dashboard self-hosted untuk banyak engine SQL.", pros: ["Banyak tipe chart dan konektor", "SQL Lab untuk eksplorasi"], cons: ["Konfigurasi keamanan dan cache perlu perhatian", "UX untuk user bisnis kurang ramah"], verify: true, updated: "2026-11-14" },
+          { id: "metabase", cat: "bi", name: "Metabase", license: "Open Source", env: "Keduanya", provider: null, setup: "Rendah", cost: "Gratis (OSS); Cloud dan Pro berbayar.", useCase: "Self-service BI sederhana untuk tim bisnis.", pros: ["Sangat mudah dipakai", "Setup cepat"], cons: ["Kurang fleksibel untuk model semantik kompleks", "Fitur governance di versi berbayar"], verify: true, updated: "2026-11-14" },
+          { id: "lookerstudio", cat: "bi", name: "Looker Studio", license: "Enterprise", env: "Cloud", provider: null, setup: "Rendah", cost: "Gratis; Looker Studio Pro per user.", useCase: "Dashboard cepat di atas BigQuery dan Google Ads/GA4.", pros: ["Gratis dan cepat", "Konektor Google bawaan"], cons: ["Performa turun pada data besar tanpa extract", "Governance terbatas"], verify: true, updated: "2026-11-14" },
+          { id: "looker", cat: "bi", name: "Looker", license: "Enterprise", env: "Cloud", provider: null, setup: "Tinggi", cost: "Lisensi platform ditambah user.", useCase: "Semantic layer (LookML) dan BI terkelola.", pros: ["Model semantik terpusat", "Embedded analytics"], cons: ["Mahal", "Butuh keahlian LookML"], verify: true, updated: "2026-11-14" },
+          { id: "powerbi", cat: "bi", name: "Power BI", license: "Enterprise", env: "Keduanya", provider: null, setup: "Rendah", cost: "Per user (Pro/PPU) atau kapasitas Fabric; Report Server untuk on-prem.", useCase: "BI di organisasi berbasis Microsoft.", pros: ["Harga per user kompetitif", "Integrasi Excel dan Teams"], cons: ["Desktop hanya di Windows", "Kapasitas besar mahal"], verify: true, updated: "2026-11-14" },
+          { id: "tableau", cat: "bi", name: "Tableau", license: "Enterprise", env: "Keduanya", provider: null, setup: "Sedang", cost: "Per user (Creator, Explorer, Viewer).", useCase: "Visual analytics interaktif tingkat lanjut.", pros: ["Visualisasi sangat kaya", "Tersedia Server untuk on-prem"], cons: ["Lisensi mahal", "Governance butuh admin khusus"], verify: true, updated: "2026-11-14" },
+          // Infrastruktur / Container
+          { id: "docker", cat: "infra", name: "Docker", license: "Open Source", env: "Keduanya", provider: null, setup: "Rendah", cost: "Engine gratis; Docker Desktop berbayar untuk perusahaan besar.", useCase: "Packaging job pipeline agar konsisten di semua lingkungan.", pros: ["Standar packaging", "Lingkungan dev sama dengan produksi"], cons: ["Lisensi Docker Desktop untuk perusahaan", "Butuh registry dan pemindaian image"], verify: true, updated: "2026-11-14" },
+          { id: "k8s", cat: "infra", name: "Kubernetes", license: "Open Source", env: "Keduanya", provider: null, setup: "Tinggi", cost: "Gratis; biaya node dan tim platform.", useCase: "Menjalankan Airflow, Spark, dan layanan data secara terstandar.", pros: ["Portabel antar lingkungan", "Autoscaling dan self-healing"], cons: ["Kompleks untuk tim kecil", "Butuh tim platform"], verify: false, updated: "2026-11-14" },
+          { id: "managedk8s", cat: "infra", name: "Managed Kubernetes (GKE/EKS/AKS)", license: "Enterprise", env: "Cloud", provider: null, setup: "Sedang", cost: "Biaya control plane ditambah node.", useCase: "Kubernetes tanpa mengelola control plane.", pros: ["Upgrade dan control plane dikelola provider", "Integrasi IAM cloud"], cons: ["Tetap perlu keahlian K8s", "Biaya node idle"], verify: true, updated: "2026-11-14" },
+          { id: "terraform", cat: "infra", name: "Terraform / OpenTofu", license: "Open Source", env: "Keduanya", provider: null, setup: "Sedang", cost: "OpenTofu gratis; Terraform berlisensi BSL, HCP Terraform berbayar.", useCase: "Infrastructure as code untuk semua lingkungan.", pros: ["Provider untuk hampir semua platform", "Perubahan infra bisa direview"], cons: ["Terraform berlisensi BSL sejak 2023; OpenTofu adalah fork berlisensi MPL", "State file harus dikelola aman"], verify: true, updated: "2026-11-14" },
+          { id: "ansible", cat: "infra", name: "Ansible", license: "Open Source", env: "Keduanya", provider: null, setup: "Sedang", cost: "Gratis; Ansible Automation Platform berlangganan.", useCase: "Konfigurasi server on-prem tanpa agent.", pros: ["Tanpa agent, cukup SSH", "Mudah dibaca"], cons: ["Lambat untuk fleet besar", "Bukan pengganti IaC untuk provisioning cloud"], verify: false, updated: "2026-11-14" }
+        ],
+        // Aturan kompatibilitas Stack Saya. level: bad | warn | info
+        compatRules: [
+          { type: "requires", tool: "dataform", needsAny: ["bigquery"], level: "bad", text: "Dataform hanya menjalankan transformasi di BigQuery. Pilih BigQuery atau ganti ke dbt." },
+          { type: "requires", tool: "datastream", needsAny: ["bigquery", "gcs"], level: "warn", text: "Google Datastream menulis ke BigQuery atau GCS; tujuan tersebut belum ada di stack." },
+          { type: "requires", tool: "gha", needsAny: ["github"], level: "warn", text: "GitHub Actions membutuhkan repo di GitHub (atau mirror)." },
+          { type: "requires", tool: "gitlabci", needsAny: ["gitlab"], level: "warn", text: "GitLab CI membutuhkan repo di GitLab." },
+          { type: "requires", tool: "bbpipelines", needsAny: ["bitbucket"], level: "bad", text: "Bitbucket Pipelines hanya berjalan untuk repo Bitbucket Cloud." },
+          { type: "requires", tool: "woodpecker", needsAny: ["gitea"], level: "warn", text: "Gitea Actions/Woodpecker paling cocok dengan Gitea/Forgejo sebagai version control." },
+          { type: "requires", tool: "dbttests", needsAny: ["dbtcore", "dbtcloud"], level: "bad", text: "dbt tests membutuhkan dbt Core atau dbt Cloud di tahap Transformation." },
+          { type: "requires", tool: "elementary", needsAny: ["dbtcore", "dbtcloud"], level: "bad", text: "Elementary bekerja dari artefak dbt; pilih dbt di tahap Transformation." },
+          { type: "requires", tool: "deequ", needsAny: ["spark", "glue", "databricks"], level: "bad", text: "Deequ berjalan di atas Spark; pilih Spark, Glue, atau Databricks." },
+          { type: "requires", tool: "unity", needsAny: ["databricks"], level: "warn", text: "Unity Catalog versi penuh hanya tersedia di Databricks." },
+          { type: "requires", tool: "debezium", needsAny: ["kafka"], level: "info", text: "Debezium umumnya berjalan di Kafka Connect. Tanpa Kafka, gunakan Debezium Server." },
+          { type: "distinctProvider", providers: ["gcp", "aws", "azure"], max: 1, level: "warn", text: "Stack memakai lebih dari satu cloud provider ({providers}). Perhitungkan biaya egress, latensi, dan IAM lintas cloud." },
+          { type: "envMix", level: "info", text: "Ada tool khusus On-Prem ({onprem}) dan khusus Cloud ({cloud}). Siapkan konektivitas hybrid (VPN/Interconnect) dan kontrol keamanan jaringan." },
+          { type: "clusterNeedsEngine", needsAny: ["spark", "glue", "databricks"], level: "info", text: "Hasil sizing Spark sudah diterapkan, tetapi belum ada engine Spark (Spark, Glue, atau Databricks) di stack." }
+        ]
+      },
+
+      /* ---------- C. Sizing Calculator ---------- */
+      sizing: {
+        spark: {
+          defaults: { volume: 1, unit: "TB", decimal: false, partitionMB: 128, nodes: 12, coresPerNode: 16, ramPerNodeGB: 64, usablePct: 70, execPerNode: 4, memPerTaskGB: 1.5, expansion: 3, diskMBs: 500, slaMin: 30, smallTableMB: 200 },
+          fields: [
+            { id: "partitionMB", label: "Target ukuran partisi", unit: "MB", help: "Umumnya 128–256 MB per partisi." },
+            { id: "nodes", label: "Jumlah worker node", unit: "node", step: 1 },
+            { id: "coresPerNode", label: "Core per node", unit: "core", step: 1 },
+            { id: "ramPerNodeGB", label: "RAM per node", unit: "GB" },
+            { id: "usablePct", label: "RAM usable untuk Spark", unit: "%", max: 100, help: "Sisanya untuk OS, overhead JVM, dan daemon." },
+            { id: "execPerNode", label: "Executor per node", unit: "executor", step: 1, help: "Sebaiknya habis membagi core per node." },
+            { id: "memPerTaskGB", label: "Batas memori per task", unit: "GB", options: [1, 1.5, 2, 3] },
+            { id: "expansion", label: "Faktor ekspansi shuffle/join", unit: "x", help: "Rasio data shuffle terhadap data input." },
+            { id: "diskMBs", label: "Throughput disk", unit: "MB/s", help: "Per node, baca/tulis sekuensial." },
+            { id: "slaMin", label: "SLA target waktu", unit: "menit" },
+            { id: "smallTableMB", label: "Ukuran tabel terkecil di join", unit: "MB", help: "Dipakai aturan broadcast join." }
+          ],
+          formulas: {
+            s1: "total_GB      = volume × B             (B = 1.024 biner, atau 1.000 desimal; hanya jika satuan TB)\ntotal_partisi = ceil(total_GB × B ÷ ukuran_partisi_MB)",
+            s2: "task_paralel = node × core_per_node\nwaves        = ceil(total_partisi ÷ task_paralel)",
+            s3: "mem_usable_per_node     = RAM_per_node × persen_usable\nmem_per_executor        = mem_usable_per_node ÷ executor_per_node\ncore_per_executor       = floor(core_per_node ÷ executor_per_node)\nmax_task_by_memory      = floor(mem_per_executor ÷ batas_memori_per_task)\ntask_efektif_per_executor = min(core_per_executor, max_task_by_memory)\nRisiko OOM jika core_per_executor > max_task_by_memory",
+            s4: "shuffle_GB                 = total_GB × faktor_ekspansi\nthroughput_GB_s            = throughput_MB_s ÷ B\nwaktu_shuffle_worst (menit) = shuffle_GB ÷ throughput_GB_s ÷ 60          (satu disk)\nwaktu_shuffle_best  (menit) = shuffle_GB ÷ (throughput_GB_s × node) ÷ 60 (semua disk paralel)",
+            s5: "faktor_scale            = waktu_shuffle_worst ÷ SLA\na) node_baru            = ceil(node × faktor_scale)\nb) core_baru            = ceil(core_per_node × faktor_scale)\nc) ekspansi_target      = faktor_ekspansi × SLA ÷ waktu_shuffle_worst\nAsumsi: waktu turun linear terhadap paralelisme."
+          },
+          // Aturan rekomendasi otomatis. metric: nama hasil hitung; op: >=, <=, >, <
+          rules: [
+            { metric: "expansion", op: ">=", value: 2, level: "warn", text: "Faktor ekspansi ≥ 2x: lakukan repartition pada join key, gunakan broadcast join untuk tabel kecil, atau redesain logika join (filter dan pilih kolom sebelum join)." },
+            { metric: "expansion", op: "<", value: 2, level: "good", text: "Ekspansi < 2x: shuffle relatif ringan. Fokus pada ukuran partisi dan data skew." },
+            { metric: "smallTableMB", op: "<=", value: 512, level: "good", text: "Tabel terkecil ≤ 512 MB: gunakan broadcast join (hint BROADCAST) agar sisi tabel besar tidak perlu di-shuffle. Default spark.sql.autoBroadcastJoinThreshold hanya 10 MB, jadi hint eksplisit sering diperlukan. Batas 512 MB adalah rule of thumb dan perlu divalidasi terhadap memori driver/executor." },
+            { metric: "waves", op: ">", value: 20, level: "info", text: "Lebih dari 20 waves: tambah paralelisme atau perbesar ukuran partisi agar overhead penjadwalan task berkurang." },
+            { metric: "partitionMB", op: ">", value: 256, level: "warn", text: "Partisi > 256 MB menaikkan risiko spill ke disk dan OOM per task." }
+          ]
+        },
+        storage: {
+          defaults: {
+            dbType: "postgres", rows0: 50000000, rowBytes: 600, growthMode: "daily", growthDaily: 250000, growthMonthlyPct: 4,
+            retentionMonths: 24, indexCount: 4, indexOverheadPct: 10, rf: 2, compression: 1,
+            peakQps: 1500, connections: 300, readPct: 80, headroomPct: 30, env: "onprem",
+            qpsPerVcpu: 250, memPerConnMB: 10, hotPct: 25, cacheHitPct: 90, ioPerWrite: 3, ioPerRead: 1, respKB: 4, maxDiskTB: 8, maxVcpuPerNode: 64,
+            kurs: 16500, serverUSD: 12000, amortMonths: 36, diskUSDperTB: 150, wattsPerNode: 450, pue: 1.5, kwhUSD: 0.11, opsPerNodeUSD: 250,
+            vcpuHrUSD: 0.035, ramGbHrUSD: 0.0047, storageGbMonthUSD: 0.10, egressGB: 500, egressUSDperGB: 0.09
+          },
+          groups: [
+            { id: "data", label: "Data", fields: [
+              { id: "dbType", label: "Jenis database", kind: "text", options: "dbTypes" },
+              { id: "rows0", label: "Jumlah baris awal", unit: "baris", step: 1, min: 0 },
+              { id: "rowBytes", label: "Rata-rata ukuran baris", unit: "byte" },
+              { id: "growthMode", label: "Model pertumbuhan", kind: "text", options: [{ value: "daily", label: "Baris per hari" }, { value: "monthly", label: "Persen per bulan" }] },
+              { id: "growthDaily", label: "Pertumbuhan per hari", unit: "baris", min: 0, showIf: ["growthMode", "daily"] },
+              { id: "growthMonthlyPct", label: "Pertumbuhan per bulan", unit: "%", min: 0, showIf: ["growthMode", "monthly"] },
+              { id: "retentionMonths", label: "Periode retensi", unit: "bulan", help: "Data lebih tua dari ini dihapus." },
+              { id: "indexCount", label: "Jumlah index", unit: "index", step: 1, min: 0 },
+              { id: "indexOverheadPct", label: "Overhead per index", unit: "% dari data", min: 0 },
+              { id: "rf", label: "Replication factor", unit: "salinan total", step: 1, help: "1 = tanpa replika; 2 = primary + 1 replika." },
+              { id: "compression", label: "Compression ratio", unit: "x", help: "Otomatis diisi sesuai jenis database." }
+            ]},
+            { id: "load", label: "Beban", fields: [
+              { id: "peakQps", label: "Peak QPS", unit: "query/detik" },
+              { id: "connections", label: "Concurrent connections", unit: "koneksi" },
+              { id: "readPct", label: "Porsi read (read:write)", unit: "% read", min: 0, max: 100 },
+              { id: "headroomPct", label: "Headroom / safety buffer", unit: "%", min: 0 }
+            ]},
+            { id: "env", label: "Lingkungan", fields: [
+              { id: "env", label: "Lingkungan target", kind: "text", options: [{ value: "onprem", label: "On-Prem" }, { value: "cloud", label: "Cloud" }] }
+            ]},
+            { id: "tech", label: "Asumsi teknis", collapsible: true, fields: [
+              { id: "qpsPerVcpu", label: "QPS per vCPU", unit: "query/detik", help: "Rule of thumb per jenis DB; validasi dengan benchmark." },
+              { id: "memPerConnMB", label: "Memori per koneksi", unit: "MB", min: 0 },
+              { id: "hotPct", label: "Data panas di RAM", unit: "% data", max: 100 },
+              { id: "cacheHitPct", label: "Cache hit ratio read", unit: "%", min: 0, max: 100 },
+              { id: "ioPerWrite", label: "I/O per write", unit: "IOPS", help: "WAL + data + index." },
+              { id: "ioPerRead", label: "I/O per read (cache miss)", unit: "IOPS" },
+              { id: "respKB", label: "Rata-rata ukuran respons", unit: "KB" },
+              { id: "maxDiskTB", label: "Kapasitas disk maksimum per node", unit: "TB" },
+              { id: "maxVcpuPerNode", label: "vCPU maksimum per node", unit: "vCPU" }
+            ]},
+            { id: "cost", label: "Asumsi biaya (contoh, perlu diverifikasi)", collapsible: true, fields: [
+              { id: "kurs", label: "Kurs USD ke IDR", unit: "Rp per USD" },
+              { id: "serverUSD", label: "On-Prem: harga server per node", unit: "USD" },
+              { id: "amortMonths", label: "On-Prem: masa amortisasi", unit: "bulan" },
+              { id: "diskUSDperTB", label: "On-Prem: harga disk SSD", unit: "USD per TB" },
+              { id: "wattsPerNode", label: "On-Prem: daya per node", unit: "watt" },
+              { id: "pue", label: "On-Prem: PUE data center", unit: "x" },
+              { id: "kwhUSD", label: "On-Prem: tarif listrik", unit: "USD per kWh" },
+              { id: "opsPerNodeUSD", label: "On-Prem: ops & rack per node", unit: "USD per bulan", min: 0 },
+              { id: "vcpuHrUSD", label: "Cloud: harga vCPU", unit: "USD per jam" },
+              { id: "ramGbHrUSD", label: "Cloud: harga RAM", unit: "USD per GB-jam" },
+              { id: "storageGbMonthUSD", label: "Cloud: harga storage SSD", unit: "USD per GB-bulan" },
+              { id: "egressGB", label: "Cloud: egress per bulan", unit: "GB", min: 0 },
+              { id: "egressUSDperGB", label: "Cloud: harga egress", unit: "USD per GB", min: 0 }
+            ]}
+          ],
+          // Default per jenis DB. Semua angka rule of thumb (perlu diverifikasi dengan benchmark).
+          dbTypes: [
+            { id: "postgres", label: "PostgreSQL", columnar: false, compression: 1.0, indexOverheadPct: 10, qpsPerVcpu: 250, memPerConnMB: 10,
+              params: [
+                { name: "shared_buffers", formula: "25% × RAM", unit: "GB", calc: c => c.ram * 0.25 },
+                { name: "effective_cache_size", formula: "75% × RAM", unit: "GB", calc: c => c.ram * 0.75 },
+                { name: "max_connections", formula: "ceil(concurrent_connections × 1,2); di atas ~300 gunakan PgBouncer", unit: "", calc: c => Math.ceil(c.conn * 1.2) },
+                { name: "work_mem", formula: "(RAM − shared_buffers) ÷ (max_connections × 3), minimum 4 MB", unit: "MB", calc: c => Math.max(4, Math.floor(c.ram * 0.75 * 1024 / (Math.ceil(c.conn * 1.2) * 3))) },
+                { name: "maintenance_work_mem", formula: "min(2 GB, 5% × RAM)", unit: "MB", calc: c => Math.round(Math.min(2048, c.ram * 1024 * 0.05)) }
+              ] },
+            { id: "mysql", label: "MySQL (InnoDB)", columnar: false, compression: 1.0, indexOverheadPct: 12, qpsPerVcpu: 300, memPerConnMB: 4,
+              params: [
+                { name: "innodb_buffer_pool_size", formula: "70% × RAM", unit: "GB", calc: c => c.ram * 0.7 },
+                { name: "innodb_redo_log_capacity", formula: "12,5% × buffer pool, dibatasi 1–16 GB (rule of thumb)", unit: "GB", calc: c => Math.min(16, Math.max(1, c.ram * 0.7 * 0.125)) },
+                { name: "max_connections", formula: "ceil(concurrent_connections × 1,2)", unit: "", calc: c => Math.ceil(c.conn * 1.2) },
+                { name: "innodb_io_capacity", formula: "50% × IOPS rekomendasi, minimum 200", unit: "", calc: c => Math.max(200, Math.round(c.iops * 0.5)) },
+                { name: "innodb_io_capacity_max", formula: "2 × innodb_io_capacity", unit: "", calc: c => 2 * Math.max(200, Math.round(c.iops * 0.5)) }
+              ] },
+            { id: "clickhouse", label: "ClickHouse", columnar: true, compression: 6, indexOverheadPct: 1, qpsPerVcpu: 15, memPerConnMB: 50,
+              params: [
+                { name: "max_server_memory_usage_to_ram_ratio", formula: "0,9 (sisakan 10% untuk OS)", unit: "", calc: () => 0.9 },
+                { name: "max_memory_usage", formula: "RAM × 0,9 ÷ 4 (asumsi 4 query berat bersamaan)", unit: "GB", calc: c => c.ram * 0.9 / 4 },
+                { name: "max_threads", formula: "= vCPU per node", unit: "", calc: c => c.vcpu },
+                { name: "max_concurrent_queries", formula: "ceil(concurrent_connections × 1,2)", unit: "", calc: c => Math.ceil(c.conn * 1.2) },
+                { name: "mark_cache_size", formula: "min(5 GB, 5% × RAM)", unit: "GB", calc: c => Math.min(5, c.ram * 0.05) }
+              ] },
+            { id: "columnar", label: "BigQuery-style columnar (serverless)", columnar: true, compression: 4, indexOverheadPct: 0, qpsPerVcpu: 5, memPerConnMB: 0,
+              params: [
+                { name: "Partisi tabel", formula: "Partisi per tanggal (DATE/TIMESTAMP) agar scan dibatasi", unit: "", calc: () => "per hari" },
+                { name: "Clustering", formula: "Hingga 4 kolom yang paling sering difilter", unit: "", calc: () => "≤ 4 kolom" },
+                { name: "maximum_bytes_billed (guard per query)", formula: "≈ 10% × data terkompresi + index (satu salinan)", unit: "GB", calc: c => Math.max(1, c.single * 0.1) },
+                { name: "Model kapasitas", formula: "Mulai on-demand; evaluasi reservasi slot bila biaya scan bulanan stabil tinggi (perlu diverifikasi)", unit: "", calc: () => "on-demand → evaluasi" }
+              ] }
+          ],
+          formulas: {
+            storage: "T(m)           = pertambahan baris kumulatif sampai bulan m\n                 harian: pertumbuhan_harian × 30,4 × m\n                 bulanan: baris_awal × ((1 + p)^m − 1)\nbaris(m)       = T(m) − T(max(0, m − retensi)) + baris_awal × max(0, 1 − m ÷ retensi)\n                 (baris_awal dianggap tersebar merata selama periode retensi)\nraw_GB         = baris × ukuran_baris ÷ 1024³\nterkompresi    = raw ÷ compression_ratio\nindex          = terkompresi × jumlah_index × overhead_per_index\nsatu_salinan   = terkompresi + index\ndengan_replika = satu_salinan × replication_factor\ntotal          = dengan_replika × (1 + headroom)",
+            spec: "vCPU_total   = ceil(peak_QPS ÷ QPS_per_vCPU × (1 + headroom))\nshard        = max(1, ceil(satu_salinan_puncak × (1 + headroom) ÷ disk_maks_node), ceil(vCPU_total ÷ vCPU_maks_node))\nnode         = shard × replication_factor\nvCPU/node    = dibulatkan ke ukuran standar (2, 4, 8, 16, …) dari vCPU_total ÷ shard\nRAM/node     = data_panas + koneksi × memori_per_koneksi + 2 GB OS, minimal 2 × vCPU, dibulatkan ke ukuran standar\ndisk/node    = satu_salinan_puncak ÷ shard × (1 + headroom)",
+            io: "write_QPS = peak_QPS × (1 − porsi_read)\nread_QPS  = peak_QPS × porsi_read\nIOPS      = (write_QPS × IO_per_write + read_QPS × (1 − cache_hit) × IO_per_read) × (1 + headroom)\nJaringan (Mbps) = (peak_QPS × respons_KB × 8,192 ÷ 1000 + write_QPS × ukuran_baris × 8 ÷ 10⁶ × (RF − 1)) × (1 + headroom)\nDisk: kolumnar → NVMe; IOPS/node > 20.000 → NVMe; > 3.000 → SSD provisioned IOPS; selain itu SSD general purpose",
+            cost: "On-Prem/bulan = node × harga_server ÷ amortisasi\n              + total_TB × harga_disk_per_TB ÷ amortisasi\n              + node × watt ÷ 1000 × 730 jam × PUE × tarif_kWh\n              + node × ops_per_node\nCloud/bulan   = node × (vCPU × harga_vCPU + RAM × harga_RAM) × 730 jam\n              + total_GB × harga_storage\n              + egress_GB × harga_egress"
+          }
+        }
+      },
+
+      /* ---------- E. Referensi & Catatan ---------- */
+      notes: [
+        { date: "2026-11-14", title: "Shuffle adalah biaya utama, bukan jumlah executor", body: "Pada job join besar, waktu didominasi I/O shuffle. Menambah executor tanpa menambah throughput disk tidak memperpendek waktu. Hitung dulu shuffle_GB ÷ throughput, lalu putuskan: tambah node, tambah disk, atau kurangi volume shuffle dengan broadcast join dan filter lebih awal.", tags: ["spark", "sizing", "shuffle"], source: "Ringkasan diskusi sizing cluster (contoh entri)" },
+        { date: "2026-11-10", title: "Cloud vs on-prem untuk sektor keuangan", body: "Untuk data nasabah, periksa ketentuan penempatan data dan pusat data di regulasi yang berlaku sebelum memilih region cloud. Pola yang sering dipakai: data mentah sensitif tetap on-prem, data teragregasi atau ter-tokenisasi diproses di cloud.", tags: ["compliance", "cloud", "hybrid"], source: "Catatan internal tim (contoh entri); regulasi spesifik perlu diverifikasi" },
+        { date: "2026-11-03", title: "Iceberg sebagai format tabel default lakehouse", body: "Memakai format tabel terbuka mengurangi lock-in engine: data yang sama bisa dibaca Spark, Trino, dan beberapa warehouse cloud. Jadwalkan maintenance rutin (compaction, expire snapshot, hapus orphan file) sejak awal.", tags: ["lakehouse", "iceberg", "storage"], source: "Dokumentasi Apache Iceberg, iceberg.apache.org" }
+      ]
+    },
+
+    /* ---------------------------------------------------------------
+       TOPIK 2 (contoh template ringan): Checklist Go-Live Pipeline
+       --------------------------------------------------------------- */
+    goLiveChecklist: {
+      slug: "go-live-checklist",
+      title: "Checklist Go-Live Pipeline",
+      desc: "Daftar periksa sebelum pipeline baru masuk produksi.",
+      tags: ["operasional", "data quality", "keamanan"],
+      sections: [
+        { id: "checklist", label: "Checklist", type: "checklist", source: "checklist" },
+        { id: "catatan", label: "Catatan", type: "notes", source: "notes" }
+      ],
+      checklist: {
+        groups: [
+          { title: "Data quality", items: [
+            { text: "Test not_null dan unique pada primary key", detail: "Jalankan di setiap run, gagal = pipeline berhenti." },
+            { text: "Check freshness per tabel sumber", detail: "Alert bila data lebih tua dari SLA." },
+            { text: "Rekonsiliasi jumlah baris sumber vs target", detail: "Toleransi selisih disepakati dengan pemilik data." },
+            { text: "Kontrak schema dengan tim sumber", detail: "Perubahan kolom diumumkan sebelum deploy." }
+          ]},
+          { title: "Observability", items: [
+            { text: "Metrik durasi dan status setiap task", detail: "Dikirim ke Prometheus, Datadog, atau monitoring native." },
+            { text: "Alert ke kanal on-call", detail: "Bukan ke email pribadi." },
+            { text: "Runbook untuk kegagalan umum", detail: "Termasuk cara backfill dan rerun." }
+          ]},
+          { title: "Keamanan", items: [
+            { text: "Secret disimpan di secret manager", detail: "Tidak ada kredensial di repo atau variabel DAG." },
+            { text: "Prinsip least privilege untuk service account", detail: "Akses baca/tulis hanya ke dataset yang dibutuhkan." },
+            { text: "Kolom PII ditandai dan dimasking", detail: "Sesuai klasifikasi di data catalog." }
+          ]},
+          { title: "Operasional", items: [
+            { text: "Pipeline idempotent", detail: "Rerun pada tanggal yang sama tidak menggandakan data." },
+            { text: "Backfill sudah diuji", detail: "Minimal 7 hari ke belakang di environment staging." },
+            { text: "Pemilik pipeline dan jalur eskalasi tercatat", detail: "Di catalog dan di README repo." }
+          ]}
+        ]
+      },
+      notes: [
+        { date: "2026-11-14", title: "Kenapa idempotensi lebih penting dari kecepatan", body: "Pipeline yang aman di-rerun membuat insiden jauh lebih murah: cukup jalankan ulang tanpa membersihkan data manual. Gunakan pola MERGE/upsert atau overwrite per partisi tanggal.", tags: ["operasional", "idempotent"], source: "Catatan tim (contoh entri)" }
+      ]
+    }
+  }
+};
+
+/* =====================================================================
+   2. UTILITAS
+   ===================================================================== */
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const num = (v, d = 0) => Number.isFinite(v) ? new Intl.NumberFormat("id-ID", { maximumFractionDigits: d }).format(v) : "—";
+const num1 = v => new Intl.NumberFormat("id-ID", { minimumFractionDigits: 1, maximumFractionDigits: 2 }).format(v);
+const fmtGB = gb => !Number.isFinite(gb) ? "—" : gb >= 1024 ? num(gb / 1024, 2) + " TB" : num(gb, gb < 10 ? 2 : 1) + " GB";
+const usd = v => "$" + num(v, v < 100 ? 2 : 0);
+const idr = (v, kurs) => "Rp" + num(v * kurs / 1e6, 1) + " jt";
+const signed = v => (v > 0 ? "+" : v < 0 ? "−" : "") + num(Math.abs(v));
+const trunc = (s, n) => s.length > n ? s.slice(0, n - 1) + "…" : s;
+function fmtDate(iso) {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", year: "numeric" }).format(new Date(y, m - 1, d));
+}
+const roundStd = (v, steps) => steps.find(s => s >= v) ?? Math.ceil(v);
+const VCPU_STEPS = [2, 4, 8, 16, 24, 32, 48, 64, 96, 128];
+const RAM_STEPS = [4, 8, 16, 32, 64, 96, 128, 192, 256, 384, 512, 768, 1024];
+function niceMax(v) {
+  if (!(v > 0)) return 1;
+  const e = Math.pow(10, Math.floor(Math.log10(v))), f = v / e;
+  return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * e;
+}
+
+/* =====================================================================
+   3. LOGIKA MURNI (tanpa DOM) — wizard, Spark, storage
+   ===================================================================== */
+function wizardScores(W, ws) {
+  const opts = {};
+  W.steps.forEach(s => s.options.forEach(o => { opts[o.id] = { score: 0, contrib: [] }; }));
+  let answered = 0;
+  W.criteria.forEach(c => {
+    const a = c.answers.find(x => x.id === ws.answers[c.id]);
+    if (!a) return;
+    answered++;
+    const imp = ws.importance[c.id];
+    Object.entries(a.scores).forEach(([o, raw]) => {
+      if (!opts[o]) return;
+      const val = raw * imp;
+      opts[o].score += val;
+      opts[o].contrib.push({ crit: c, ans: a, raw, imp, val });
+    });
+  });
+  const steps = W.steps.map(s => {
+    const list = s.options.map(o => Object.assign({}, o, opts[o.id]));
+    const max = Math.max(...list.map(o => o.score));
+    const top = list.filter(o => o.score === max);
+    return { step: s, list, winner: answered ? top[0] : null, tie: answered && top.length > 1 ? top : null };
+  });
+  steps.forEach(r => {
+    const cond = r.step.showIf;
+    const ref = cond && steps.find(x => x.step.id === cond.step);
+    r.visible = !cond || (!!ref.winner && cond.anyOf.includes(ref.winner.id));
+  });
+  return { steps, answered };
+}
+
+function sparkCalc(v) {
+  const B = v.decimal ? 1000 : 1024, altB = v.decimal ? 1024 : 1000;
+  const toGB = base => v.unit === "TB" ? v.volume * base : v.volume;
+  const totalGB = toGB(B);
+  const partitions = Math.ceil(totalGB * B / v.partitionMB);
+  const parallel = v.nodes * v.coresPerNode;
+  const waves = Math.ceil(partitions / parallel);
+  const memUsable = v.ramPerNodeGB * v.usablePct / 100;
+  const memPerExec = memUsable / v.execPerNode;
+  const corePerExec = Math.floor(v.coresPerNode / v.execPerNode);
+  const maxTaskMem = Math.floor(memPerExec / v.memPerTaskGB);
+  const effTasks = Math.min(corePerExec, maxTaskMem);
+  const oom = corePerExec > maxTaskMem;
+  const effParallel = v.nodes * v.execPerNode * effTasks;
+  const shuffleGB = totalGB * v.expansion;
+  const tput = v.diskMBs / B;
+  const worst = shuffleGB / tput / 60;
+  const best = shuffleGB / (tput * v.nodes) / 60;
+  const altWorst = toGB(altB) * v.expansion / (v.diskMBs / altB) / 60;
+  const factor = worst / v.slaMin;
+  const nodesNew = Math.ceil(v.nodes * factor);
+  const coresNew = Math.ceil(v.coresPerNode * factor);
+  const expTarget = v.expansion * v.slaMin / worst;
+  return {
+    B, altB, totalGB, partitions, parallel, waves, memUsable, memPerExec, corePerExec, maxTaskMem, effTasks, oom,
+    bound: oom ? "Memory-bound" : "CPU-bound", effParallel, shuffleGB, tput, worst, best, altWorst, factor,
+    meets: factor <= 1, nLow: Math.max(1, Math.floor(factor)), nHigh: Math.floor(factor) + 1, isInt: Number.isInteger(factor),
+    nodesNew, coresNew, expTarget,
+    timeA: worst * v.nodes / nodesNew, timeB: worst * v.coresPerNode / coresNew, timeC: v.slaMin,
+    ramForCores: v.ramPerNodeGB * coresNew / v.coresPerNode
+  };
+}
+
+function storageCalc(v, db) {
+  const R = v.retentionMonths, H = 36, hr = 1 + v.headroomPct / 100, GiB = 1024 ** 3;
+  const T = m => v.growthMode === "daily" ? v.growthDaily * 30.4 * m : v.rows0 * (Math.pow(1 + v.growthMonthlyPct / 100, m) - 1);
+  const rowsAt = m => T(m) - T(Math.max(0, m - R)) + v.rows0 * Math.max(0, 1 - m / R);
+  const at = m => {
+    const rows = rowsAt(m), raw = rows * v.rowBytes / GiB, comp = raw / v.compression;
+    const idx = comp * v.indexCount * v.indexOverheadPct / 100, single = comp + idx, repl = single * v.rf;
+    return { m, rows, raw, comp, idx, single, repl, total: repl * hr };
+  };
+  const series = Array.from({ length: H + 1 }, (_, m) => at(m));
+  const peak = series.reduce((a, b) => b.total > a.total ? b : a);
+  const writeQps = v.peakQps * (1 - v.readPct / 100), readQps = v.peakQps * v.readPct / 100;
+  const vcpuTotal = Math.ceil(v.peakQps / v.qpsPerVcpu * hr);
+  const storageShards = Math.ceil(peak.single * hr / (v.maxDiskTB * 1024));
+  const computeShards = Math.ceil(vcpuTotal / v.maxVcpuPerNode);
+  const shards = Math.max(1, storageShards, computeShards);
+  const nodes = shards * v.rf;
+  const vcpuNode = roundStd(Math.max(2, Math.ceil(vcpuTotal / shards)), VCPU_STEPS);
+  const hotGB = peak.single / shards * v.hotPct / 100;
+  const connGB = v.connections / shards * v.memPerConnMB / 1024;
+  const ramNeed = hotGB + connGB + 2;
+  const ramNode = roundStd(Math.max(ramNeed, vcpuNode * 2), RAM_STEPS);
+  const diskNode = peak.single / shards * hr;
+  const iops = Math.ceil((writeQps * v.ioPerWrite + readQps * (1 - v.cacheHitPct / 100) * v.ioPerRead) * hr);
+  const iopsNode = Math.ceil(iops / shards);
+  const diskType = db.columnar ? "NVMe SSD (throughput scan tinggi)" : iopsNode > 20000 ? "NVMe SSD" : iopsNode > 3000 ? "SSD dengan provisioned IOPS" : "SSD general purpose";
+  const netMbps = (v.peakQps * v.respKB * 8.192 / 1000 + writeQps * v.rowBytes * 8 / 1e6 * (v.rf - 1)) * hr;
+  const nic = netMbps <= 800 ? "1 Gbps" : netMbps <= 8000 ? "10 Gbps" : "25 Gbps atau lebih";
+  const ctx = { ram: ramNode, vcpu: vcpuNode, conn: v.connections, iops: iopsNode, single: peak.single };
+  const params = db.params.map(p => Object.assign({}, p, { value: p.calc(ctx) }));
+  const onprem = {
+    hw: nodes * v.serverUSD / v.amortMonths,
+    disk: peak.total / 1024 * v.diskUSDperTB / v.amortMonths,
+    power: nodes * v.wattsPerNode / 1000 * 730 * v.pue * v.kwhUSD,
+    ops: nodes * v.opsPerNodeUSD
+  };
+  onprem.total = onprem.hw + onprem.disk + onprem.power + onprem.ops;
+  const cloud = {
+    compute: nodes * (vcpuNode * v.vcpuHrUSD + ramNode * v.ramGbHrUSD) * 730,
+    storage: peak.total * v.storageGbMonthUSD,
+    egress: v.egressGB * v.egressUSDperGB
+  };
+  cloud.total = cloud.compute + cloud.storage + cloud.egress;
+  return { series, peak, writeQps, readQps, vcpuTotal, storageShards, computeShards, shards, nodes, vcpuNode, hotGB, connGB, ramNeed, ramNode, diskNode, iops, iopsNode, diskType, netMbps, nic, params, onprem, cloud };
+}
+
+/* =====================================================================
+   4. STATE (hanya di memori — tidak memakai localStorage)
+   ===================================================================== */
+const TOPICS = Object.entries(KB_DATA.topics).map(([id, t]) => Object.assign({ id }, t));
+const HOME = "daftar-isi";
+const bus = new EventTarget();
+const topicStates = {};
+const tstate = id => (topicStates[id] ||= { search: "", section: null });
+
+/* =====================================================================
+   5. UI HELPER: toast, copy, tablist keyboard
+   ===================================================================== */
+let toastTimer;
+function toast(msg) {
+  const t = $("#toast");
+  t.textContent = msg; t.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.hidden = true; }, 2600);
+}
+function copyText(text, okMsg) {
+  const fallback = () => {
+    const box = $("#copybox"), ta = $("#copybox-text");
+    ta.value = text; box.hidden = false; ta.focus(); ta.select();
+  };
+  try {
+    navigator.clipboard.writeText(text).then(() => toast(okMsg), fallback);
+  } catch (e) { fallback(); }
+}
+function wireTablist(list) {
+  list.addEventListener("keydown", e => {
+    const tabs = $$(":scope > [role=tab]", list), i = tabs.indexOf(document.activeElement);
+    if (i < 0) return;
+    const j = { ArrowRight: (i + 1) % tabs.length, ArrowLeft: (i - 1 + tabs.length) % tabs.length, Home: 0, End: tabs.length - 1 }[e.key];
+    if (j === undefined) return;
+    e.preventDefault(); tabs[j].focus(); tabs[j].click();
+  });
+}
+function setTabs(list, activeKey, attr) {
+  $$(":scope > [role=tab]", list).forEach(b => {
+    const on = b.dataset[attr] === activeKey;
+    b.setAttribute("aria-selected", on); b.tabIndex = on ? 0 : -1;
+  });
+}
+
+/* =====================================================================
+   6. PENCARIAN + HIGHLIGHT (berlaku untuk elemen .s-item di tiap tab)
+   ===================================================================== */
+function clearMarks(root) {
+  $$("mark.hl", root).forEach(m => { const p = m.parentNode; m.replaceWith(document.createTextNode(m.textContent)); p.normalize(); });
+}
+function highlight(root, q) {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode: n => n.nodeValue.toLowerCase().includes(q) && n.parentElement && !n.parentElement.closest("option,textarea,svg,mark,.no-hl") ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT
+  });
+  const nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+  nodes.forEach(n => {
+    const text = n.nodeValue, low = text.toLowerCase(), frag = document.createDocumentFragment();
+    let i = 0, j;
+    while ((j = low.indexOf(q, i)) !== -1) {
+      frag.append(text.slice(i, j));
+      const m = document.createElement("mark"); m.className = "hl"; m.textContent = text.slice(j, j + q.length); frag.append(m);
+      i = j + q.length;
+    }
+    frag.append(text.slice(i));
+    n.replaceWith(frag);
+  });
+}
+function applySearch(t) {
+  const q = tstate(t.id).search.trim().toLowerCase(), panel = $("#panel-" + t.slug);
+  clearMarks(panel);
+  let total = 0, secsWithHits = 0;
+  t.sections.forEach(s => {
+    const sec = $(`#sec-${t.slug}-${s.id}`), items = $$(".s-item", sec);
+    let n = 0;
+    items.forEach(it => {
+      const hit = !q || it.textContent.toLowerCase().includes(q);
+      it.classList.toggle("s-miss", !hit);
+      if (hit) { n++; if (q) highlight(it, q); }
+    });
+    $$(".s-group", sec).forEach(g => g.classList.toggle("s-miss", !!q && !g.querySelector(".s-item:not(.s-miss)")));
+    const empty = $(`#emp-${t.slug}-${s.id}`);
+    empty.hidden = !(q && n === 0);
+    empty.textContent = `Tidak ditemukan hasil untuk “${q}” di bagian ini.`;
+    const cnt = $(`#cnt-${t.slug}-${s.id}`);
+    cnt.hidden = !q; cnt.textContent = n;
+    if (q) { total += n; if (n) secsWithHits++; }
+  });
+  $("#qs-" + t.slug).textContent = q ? (total ? `${num(total)} hasil di ${secsWithHits} bagian. Angka di tiap sub-tab menunjukkan jumlah hasil.` : `Tidak ditemukan hasil untuk “${q}”.`) : "";
+}
+
+/* =====================================================================
+   7. RENDERER BAGIAN — dipilih berdasarkan sections[].type
+   ===================================================================== */
+const RENDERERS = { wizard: renderWizard, tools: renderTools, sizing: renderSizing, notes: renderNotes, checklist: renderChecklist };
+
+/* ---------- 7a. Decision Wizard ---------- */
+function renderWizard(t, sec, body) {
+  const W = t[sec.source], st = tstate(t.id), P = t.slug;
+  const fresh = () => ({ answers: {}, importance: Object.fromEntries(W.criteria.map(c => [c.id, c.importance])), preset: null });
+  st.wizard = fresh();
+  body.innerHTML = `
+  <div class="wiz">
+    <div class="wiz-main">
+      <section aria-labelledby="pre-${P}">
+        <h3 class="h-sm" id="pre-${P}">Preset skenario</h3>
+        <div class="preset-list">${W.presets.map(p => `<button type="button" class="preset s-item" data-preset="${p.id}" aria-pressed="false"><strong>${esc(p.label)}</strong><span>${esc(p.desc)}</span></button>`).join("")}</div>
+      </section>
+      <div class="wiz-bar">
+        <p class="progress" data-role="progress"></p>
+        <div class="btns"><button type="button" class="btn" data-act="reset">Reset</button><button type="button" class="btn primary" data-act="export">Export ringkasan</button></div>
+      </div>
+      <ol class="crit-list">${W.criteria.map((c, i) => `
+        <li class="crit s-item">
+          <div class="crit-q"><span class="crit-no">${String(i + 1).padStart(2, "0")}</span><div><h4 id="cl-${P}-${c.id}">${esc(c.label)}</h4><p class="help">${esc(c.help)}</p></div></div>
+          <fieldset class="seg"><legend class="sr">Jawaban untuk ${esc(c.label)}</legend>${c.answers.map(a => `
+            <label class="seg-opt"><input type="radio" name="w-${P}-${c.id}" value="${a.id}" data-crit="${c.id}"><span>${esc(a.label)}</span></label>`).join("")}
+          </fieldset>
+          <div class="imp"><label for="imp-${P}-${c.id}">Bobot kepentingan</label><input type="range" min="1" max="5" step="1" id="imp-${P}-${c.id}" data-imp="${c.id}" value="${c.importance}"><output for="imp-${P}-${c.id}">${c.importance}</output></div>
+        </li>`).join("")}
+      </ol>
+    </div>
+    <aside class="wiz-result" data-role="result" aria-live="polite" aria-label="Hasil Decision Wizard"></aside>
+  </div>`;
+
+  const syncInputs = () => {
+    W.criteria.forEach(c => {
+      $$(`input[name="w-${P}-${c.id}"]`, body).forEach(r => { r.checked = st.wizard.answers[c.id] === r.value; });
+      const rg = $(`#imp-${P}-${c.id}`, body); rg.value = st.wizard.importance[c.id]; rg.nextElementSibling.textContent = rg.value;
+    });
+    $$(".preset", body).forEach(b => b.setAttribute("aria-pressed", b.dataset.preset === st.wizard.preset));
+  };
+
+  const update = () => {
+    const R = wizardScores(W, st.wizard);
+    $("[data-role=progress]", body).textContent = `${R.answered}/${W.criteria.length} kriteria dijawab`;
+    $("[data-role=result]", body).innerHTML = wizardResultHTML(W, R);
+    const byId = id => R.steps.find(s => s.step.id === id);
+    st.wizardResult = R.answered ? {
+      deployment: byId("deployment")?.winner?.id, licensing: byId("licensing")?.winner?.id,
+      provider: byId("provider")?.visible ? byId("provider").winner?.id : null,
+      label: R.steps.filter(s => s.visible && s.winner).map(s => s.winner.label).join(" · ")
+    } : null;
+    st.wizardLast = R;
+    bus.dispatchEvent(new CustomEvent("wizard", { detail: t.id }));
+  };
+
+  body.addEventListener("change", e => {
+    const el = e.target;
+    if (el.dataset.crit) { st.wizard.answers[el.dataset.crit] = el.value; st.wizard.preset = null; syncInputs(); update(); }
+  });
+  body.addEventListener("input", e => {
+    const el = e.target;
+    if (el.dataset.imp) { st.wizard.importance[el.dataset.imp] = +el.value; el.nextElementSibling.textContent = el.value; update(); }
+  });
+  body.addEventListener("click", e => {
+    const pre = e.target.closest("[data-preset]"), act = e.target.closest("[data-act]");
+    if (pre) {
+      const p = W.presets.find(x => x.id === pre.dataset.preset);
+      st.wizard = fresh();
+      Object.assign(st.wizard.answers, p.answers);
+      Object.assign(st.wizard.importance, p.importance || {});
+      st.wizard.preset = p.id;
+      syncInputs(); update(); toast(`Preset “${p.label}” diterapkan`);
+    } else if (act?.dataset.act === "reset") {
+      st.wizard = fresh(); syncInputs(); update(); toast("Wizard direset");
+    } else if (act?.dataset.act === "export") {
+      copyText(wizardExportText(W, st), "Ringkasan wizard disalin ke clipboard");
+    }
+  });
+  update();
+}
+
+function topContrib(o, sign, n) {
+  return o.contrib.filter(c => sign > 0 ? c.val > 0 : c.val < 0).sort((a, b) => sign > 0 ? b.val - a.val : a.val - b.val).slice(0, n);
+}
+function contribLine(c) {
+  return `${esc(c.crit.label)}: “${esc(c.ans.label)}” <span class="mono muted">(${signed(c.raw)} × bobot ${c.imp} = ${signed(c.val)})</span>`;
+}
+function divergingBars(list, winnerId) {
+  const max = Math.max(1, ...list.map(o => Math.abs(o.score)));
+  return `<div class="dbars">${list.map(o => {
+    const w = Math.abs(o.score) / max * 50, pos = o.score >= 0;
+    return `<div class="dbar${o.id === winnerId ? " win" : ""}"><span class="dbar-l" title="${esc(o.label)}">${esc(o.label)}</span><span class="dbar-track" aria-hidden="true"><span class="dbar-fill ${pos ? "pos" : "neg"}" style="${pos ? "left" : "right"}:50%;width:${w}%"></span></span><span class="dbar-v">${signed(o.score)}</span></div>`;
+  }).join("")}</div>`;
+}
+function wizardResultHTML(W, R) {
+  const formula = `<details class="formula"><summary>Lihat rumus</summary><pre>${esc(W.formula)}</pre></details>`;
+  if (!R.answered) return `<h3>Hasil</h3><p class="muted">Jawab minimal satu kriteria atau pilih preset. Skor dihitung ulang setiap kali jawaban atau bobot berubah.</p>${formula}`;
+  const vis = R.steps.filter(s => s.visible);
+  const winners = vis.map(s => s.winner);
+  const steps = R.steps.map(s => {
+    if (!s.visible) return `<section class="res-step"><h4>${esc(s.step.title)}</h4><p class="muted" style="font-size:13px">Tidak relevan karena hasil Langkah 1 adalah ${esc(R.steps[0].winner.label)}.</p></section>`;
+    return `<section class="res-step"><h4><span>${esc(s.step.title)}</span>${s.tie ? `<span class="badge warn">Seri</span>` : ""}</h4>${divergingBars(s.list, s.winner.id)}</section>`;
+  }).join("");
+  const why = vis.map(s => {
+    const pos = topContrib(s.winner, 1, 3);
+    return `<li><b>${esc(s.winner.label)}</b>${pos.length ? `<ul class="res-list" style="margin-top:4px">${pos.map(c => `<li>${contribLine(c)}</li>`).join("")}</ul>` : ` <span class="muted">— belum ada kriteria yang mendukung secara positif.</span>`}</li>`;
+  }).join("");
+  const against = winners.flatMap(w => topContrib(w, -1, 2).map(c => Object.assign({ opt: w }, c)));
+  const ties = vis.filter(s => s.tie);
+  return `
+    <div class="rec"><span class="eyebrow">Rekomendasi teratas</span><b>${winners.map(w => esc(w.label)).join(" + ")}</b></div>
+    ${ties.length ? `<p class="alert warn">Skor seri di ${ties.map(s => esc(s.step.title)).join(", ")}: ${ties.map(s => s.tie.map(o => esc(o.label)).join(" / ")).join("; ")}. Naikkan bobot kriteria yang paling penting untuk memecah seri.</p>` : ""}
+    ${steps}
+    <section class="res-block"><h4>Mengapa</h4><ul class="res-list">${why}</ul></section>
+    ${against.length ? `<section class="res-block"><h4>Kriteria yang menentang</h4><ul class="res-list">${against.map(c => `<li><b>${esc(c.opt.label)}</b> — ${contribLine(c)}</li>`).join("")}</ul></section>` : ""}
+    <section class="res-block"><h4>Trade-off</h4><ul class="res-list">${winners.flatMap(w => w.tradeoffs).map(x => `<li>${esc(x)}</li>`).join("")}</ul></section>
+    <section class="res-block"><h4>Risiko</h4><ul class="res-list">${winners.flatMap(w => w.risks).map(x => `<li>${esc(x)}</li>`).join("")}</ul></section>
+    ${formula}`;
+}
+function wizardExportText(W, st) {
+  const R = wizardScores(W, st.wizard);
+  if (!R.answered) return "Decision Wizard: belum ada kriteria yang dijawab.";
+  const vis = R.steps.filter(s => s.visible), L = [];
+  L.push(`DECISION WIZARD — ${KB_DATA.meta.title} (${fmtDate(KB_DATA.meta.updated)})`);
+  L.push(`Rekomendasi: ${vis.map(s => s.winner.label).join(" + ")}`, "");
+  R.steps.forEach(s => L.push(`${s.step.title}: ${s.visible ? s.list.map(o => `${o.label} ${signed(o.score)}`).join(" | ") : "tidak relevan"}`));
+  L.push("", "Kontributor utama:");
+  vis.forEach(s => topContrib(s.winner, 1, 3).forEach(c => L.push(`- ${s.winner.label}: ${c.crit.label} = ${c.ans.label} (${signed(c.raw)} × ${c.imp} = ${signed(c.val)})`)));
+  L.push("", "Trade-off:"); vis.forEach(s => s.winner.tradeoffs.forEach(x => L.push(`- ${x}`)));
+  L.push("", "Risiko:"); vis.forEach(s => s.winner.risks.forEach(x => L.push(`- ${x}`)));
+  L.push("", "Jawaban:");
+  W.criteria.forEach(c => { const a = c.answers.find(x => x.id === st.wizard.answers[c.id]); L.push(`- ${c.label}: ${a ? a.label : "(belum dijawab)"} [bobot ${st.wizard.importance[c.id]}]`); });
+  return L.join("\n");
+}
+
+/* ---------- 7b. Tool Explorer ---------- */
+function fitIssues(tool, wr, provLabel) {
+  if (!wr) return [];
+  const out = [], big3 = ["gcp", "aws", "azure"];
+  if (wr.deployment === "onprem" && tool.env === "Cloud") out.push("hanya tersedia di cloud, sedangkan hasil wizard On-Premise");
+  if (wr.deployment === "cloud" && tool.env === "On-Prem") out.push("khusus on-prem, sedangkan hasil wizard Cloud");
+  if (wr.licensing === "oss" && tool.license === "Enterprise") out.push("berlisensi Enterprise, sedangkan hasil wizard Open Source");
+  if (wr.licensing === "enterprise" && tool.license === "Open Source" && tool.setup === "Tinggi") out.push("setup sulit untuk self-managed, sedangkan hasil wizard Enterprise/Managed");
+  if (wr.provider && big3.includes(wr.provider) && big3.includes(tool.provider) && tool.provider !== wr.provider) out.push(`milik ${provLabel[tool.provider]}, sedangkan hasil wizard ${provLabel[wr.provider]}`);
+  return out;
+}
+function evalCompat(T, picks, cluster) {
+  const sel = Object.values(picks).map(id => T.items.find(i => i.id === id)).filter(Boolean);
+  const ids = new Set(sel.map(s => s.id)), out = [];
+  T.compatRules.forEach(r => {
+    if (r.type === "requires") {
+      if (ids.has(r.tool) && !r.needsAny.some(x => ids.has(x))) out.push(r);
+    } else if (r.type === "distinctProvider") {
+      const prov = [...new Set(sel.map(s => s.provider).filter(p => r.providers.includes(p)))];
+      if (prov.length > r.max) out.push({ level: r.level, text: r.text.replace("{providers}", prov.map(p => T.providers[p]).join(", ")) });
+    } else if (r.type === "envMix") {
+      const on = sel.filter(s => s.env === "On-Prem"), cl = sel.filter(s => s.env === "Cloud");
+      if (on.length && cl.length) out.push({ level: r.level, text: r.text.replace("{onprem}", on.map(s => s.name).join(", ")).replace("{cloud}", cl.map(s => s.name).join(", ")) });
+    } else if (r.type === "clusterNeedsEngine") {
+      if (cluster && !r.needsAny.some(x => ids.has(x))) out.push(r);
+    }
+  });
+  return out;
+}
+function flowSVG(sel, P) {
+  const main = sel.filter(x => x.c.flow === "main").sort((a, b) => a.c.flowOrder - b.c.flowOrder);
+  const sup = sel.filter(x => x.c.flow !== "main").sort((a, b) => a.c.flowOrder - b.c.flowOrder);
+  const W = 300, bw = 260, bh = 46, gap = 22, x0 = (W - bw) / 2;
+  let y = 6, s = "";
+  main.forEach((x, i) => {
+    s += `<rect class="fl-box ${x.tool ? "on" : "off"}" x="${x0}" y="${y}" width="${bw}" height="${bh}" rx="6"/>
+      <text class="fl-k" x="${x0 + 12}" y="${y + 17}">${esc(x.c.short)}</text>
+      <text class="fl-n${x.tool ? "" : " off"}" x="${x0 + 12}" y="${y + 36}">${esc(trunc(x.tool ? x.tool.name : "belum dipilih", 32))}</text>`;
+    if (i < main.length - 1) s += `<line class="fl-a" x1="${W / 2}" y1="${y + bh + 2}" x2="${W / 2}" y2="${y + bh + gap - 4}" marker-end="url(#arr-${P})"/>`;
+    y += bh + gap;
+  });
+  s += `<text class="fl-k" x="${x0}" y="${y + 2}">Lintas tahap</text>`;
+  y += 10;
+  const cw = (bw - 8) / 2, ch = 38;
+  sup.forEach((x, i) => {
+    const cx = x0 + (i % 2) * (cw + 8), cy = y + Math.floor(i / 2) * (ch + 8);
+    s += `<rect class="fl-box ${x.tool ? "on" : "off"}" x="${cx}" y="${cy}" width="${cw}" height="${ch}" rx="5"/>
+      <text class="fl-k" x="${cx + 8}" y="${cy + 14}">${esc(x.c.short)}</text>
+      <text class="fl-n sm${x.tool ? "" : " off"}" x="${cx + 8}" y="${cy + 30}">${esc(trunc(x.tool ? x.tool.name : "—", 19))}</text>`;
+  });
+  const H = y + Math.ceil(sup.length / 2) * (ch + 8);
+  const aria = "Alur stack: " + main.map(x => `${x.c.short} ${x.tool ? x.tool.name : "belum dipilih"}`).join(", lalu ");
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(aria)}"><defs><marker id="arr-${P}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="fl-ah" d="M0 0L10 5L0 10z"/></marker></defs>${s}</svg>`;
+}
+function renderTools(t, sec, body) {
+  const T = t[sec.source], st = tstate(t.id), P = t.slug;
+  st.tools = { env: "all", license: "all", cat: "all", picks: {} };
+  const seg = (name, key, opts) => `<fieldset class="seg"><legend class="sr">${name}</legend>${opts.map(([v, l]) => `<label class="seg-opt"><input type="radio" name="tx-${key}-${P}" value="${v}" data-filter="${key}" ${v === "all" ? "checked" : ""}><span>${l}</span></label>`).join("")}</fieldset>`;
+  body.innerHTML = `
+  <div class="tx">
+    <div class="tx-main">
+      <div class="filters" role="group" aria-label="Filter tool">
+        <div class="frow"><span class="flabel" aria-hidden="true">Lingkungan</span>${seg("Lingkungan", "env", [["all", "Semua"], ["On-Prem", "Bisa On-Prem"], ["Cloud", "Bisa Cloud"], ["Keduanya", "Keduanya"]])}</div>
+        <div class="frow"><span class="flabel" aria-hidden="true">Lisensi</span>${seg("Lisensi", "license", [["all", "Semua"], ["Open Source", "Open Source"], ["Enterprise", "Enterprise"]])}</div>
+        <div class="frow"><label class="flabel" for="tx-cat-${P}">Kategori</label><select id="tx-cat-${P}" data-filter="cat"><option value="all">Semua kategori (${T.categories.length})</option>${T.categories.map(c => `<option value="${c.id}">${esc(c.label)}</option>`).join("")}</select></div>
+        <p class="fitnote" data-role="fitnote"></p>
+        <p class="fitnote">Cari nama tool, pros, atau cons lewat kolom “Cari di tab ini” di atas. <a href="#stack-${P}">Lihat Stack Saya</a></p>
+      </div>
+      <div data-role="grid" style="display:grid;gap:22px"></div>
+    </div>
+    <aside class="stack" id="stack-${P}" data-role="stack" aria-label="Stack Saya" tabindex="-1"></aside>
+  </div>`;
+  const envOk = (f, it) => f === "all" || (f === "Keduanya" ? it.env === "Keduanya" : it.env === f || it.env === "Keduanya");
+
+  const paintGrid = () => {
+    const f = st.tools, wr = st.wizardResult;
+    $("[data-role=fitnote]", body).innerHTML = wr
+      ? `Hasil Decision Wizard: <b>${esc(wr.label)}</b>. Tool yang tidak sesuai diberi badge “Kurang cocok” dan tetap ditampilkan.`
+      : `Belum ada hasil Decision Wizard. Isi wizard agar tool yang kurang sesuai ditandai otomatis.`;
+    const html = T.categories.filter(c => f.cat === "all" || c.id === f.cat).map(c => {
+      const items = T.items.filter(it => it.cat === c.id && envOk(f.env, it) && (f.license === "all" || it.license === f.license));
+      if (!items.length) return "";
+      return `<section class="cat s-group"><div class="cat-h"><h3>${esc(c.label)}</h3><p>${esc(c.desc)}</p></div><div class="cards">${items.map(it => toolCard(it, f.picks[c.id] === it.id, fitIssues(it, wr, T.providers), T)).join("")}</div></section>`;
+    }).join("");
+    $("[data-role=grid]", body).innerHTML = html || `<p class="empty">Tidak ada tool yang cocok dengan filter ini. Ubah filter Lingkungan, Lisensi, atau Kategori.</p>`;
+    applySearch(t);
+  };
+
+  const paintStack = () => {
+    const sel = T.categories.map(c => ({ c, tool: T.items.find(i => i.id === st.tools.picks[c.id]) }));
+    const filled = sel.filter(x => x.tool).length, warns = evalCompat(T, st.tools.picks, st.cluster), cl = st.cluster;
+    $("[data-role=stack]", body).innerHTML = `
+      <div class="stack-head"><h3>Stack Saya</h3><span class="muted mono">${filled}/${sel.length} tahap</span></div>
+      <div class="flow">${flowSVG(sel, P)}</div>
+      ${cl ? `<div class="cluster"><span class="k">Compute Spark (dari Sizing Calculator)</span><b>${num(cl.nodes)} node × ${num(cl.cores)} core × ${num(cl.ram)} GB RAM</b><br><span class="muted">Total ${num(cl.nodes * cl.cores)} core, ${num(cl.nodes * cl.ram)} GB RAM · ${num(cl.waves)} waves · shuffle ~${num(cl.worst)} menit (worst)</span></div>` : ""}
+      <div class="warns">${warns.length ? warns.map(w => `<p class="alert ${w.level}"><span>${esc(w.text)}</span></p>`).join("") : filled > 1 ? `<p class="alert good"><span>Tidak ada peringatan kompatibilitas untuk kombinasi ini.</span></p>` : `<p class="muted" style="font-size:13px">Pilih satu tool per kategori dengan tombol “Pilih”. Peringatan kompatibilitas muncul di sini.</p>`}</div>
+      <ul class="stack-list">${sel.map(x => `<li><span>${esc(x.c.label)}</span><b>${x.tool ? esc(x.tool.name) : "—"}</b></li>`).join("")}</ul>
+      <div class="btns"><button type="button" class="btn primary" data-act="copy-stack">Copy stack</button><button type="button" class="btn" data-act="clear-stack">Kosongkan</button></div>`;
+  };
+
+  body.addEventListener("change", e => {
+    const k = e.target.dataset.filter;
+    if (k) { st.tools[k] = e.target.value; paintGrid(); }
+  });
+  body.addEventListener("click", e => {
+    const pick = e.target.closest("[data-pick]"), act = e.target.closest("[data-act]");
+    if (pick) {
+      const it = T.items.find(i => i.id === pick.dataset.pick);
+      st.tools.picks[it.cat] = st.tools.picks[it.cat] === it.id ? undefined : it.id;
+      if (!st.tools.picks[it.cat]) delete st.tools.picks[it.cat];
+      paintGrid(); paintStack();
+      $(`[data-pick="${it.id}"]`, body)?.focus();
+    } else if (act?.dataset.act === "clear-stack") {
+      st.tools.picks = {}; st.cluster = null; paintGrid(); paintStack(); toast("Stack dikosongkan");
+    } else if (act?.dataset.act === "copy-stack") {
+      const L = ["STACK SAYA", ...T.categories.map(c => `${c.label}: ${T.items.find(i => i.id === st.tools.picks[c.id])?.name || "—"}`)];
+      if (st.cluster) L.push(`Compute Spark: ${st.cluster.nodes} node × ${st.cluster.cores} core × ${st.cluster.ram} GB RAM`);
+      const w = evalCompat(T, st.tools.picks, st.cluster);
+      if (w.length) L.push("", "Peringatan:", ...w.map(x => "- " + x.text));
+      copyText(L.join("\n"), "Ringkasan stack disalin ke clipboard");
+    }
+  });
+  bus.addEventListener("wizard", e => { if (e.detail === t.id) paintGrid(); });
+  bus.addEventListener("cluster", e => { if (e.detail === t.id) paintStack(); });
+  paintGrid(); paintStack();
+}
+function toolCard(it, picked, issues, T) {
+  const setupCls = { Rendah: "good", Sedang: "", Tinggi: "warn" }[it.setup];
+  return `<article class="tool s-item${picked ? " picked" : ""}">
+    <div class="tool-top"><h4>${esc(it.name)}</h4><button type="button" class="pick no-hl" data-pick="${it.id}" aria-pressed="${picked}" aria-label="${picked ? "Batalkan pilihan" : "Pilih"} ${esc(it.name)}">${picked ? "Dipilih" : "Pilih"}</button></div>
+    <div class="badges">
+      <span class="badge ${it.license === "Open Source" ? "oss" : "ent"}">${esc(it.license)}</span>
+      <span class="badge">${esc(it.env === "Keduanya" ? "On-Prem & Cloud" : it.env)}</span>
+      <span class="badge ${setupCls}">Setup: ${esc(it.setup)}</span>
+      ${it.provider ? `<span class="badge">${esc(T.providers[it.provider])}</span>` : ""}
+      ${issues.length ? `<span class="badge bad">Kurang cocok</span>` : ""}
+      ${it.verify ? `<span class="badge warn">Perlu diverifikasi</span>` : ""}
+    </div>
+    ${issues.length ? `<p class="fitwhy">Kurang cocok: ${esc(issues.join("; "))}.</p>` : ""}
+    <p><span class="k">Use-case terbaik</span>${esc(it.useCase)}</p>
+    <div class="pc"><div><span class="k">Pros</span><ul>${it.pros.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div><div><span class="k">Cons</span><ul>${it.cons.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div></div>
+    <p><span class="k">Model biaya</span>${esc(it.cost)}</p>
+    <p class="upd">Terakhir diperbarui ${fmtDate(it.updated)}</p>
+  </article>`;
+}
+
+/* ---------- 7c. Sizing Calculator (Spark + Storage) ---------- */
+function renderSizing(t, sec, body) {
+  const S = t[sec.source], st = tstate(t.id), P = t.slug;
+  st.sizingTab = "spark";
+  body.innerHTML = `
+    <div class="inner-tabs" role="tablist" aria-label="Jenis kalkulator">
+      <button role="tab" id="itab-${P}-spark" data-itab="spark" aria-controls="ipanel-${P}-spark">Compute · Spark Cluster</button>
+      <button role="tab" id="itab-${P}-storage" data-itab="storage" aria-controls="ipanel-${P}-storage">Storage · Database</button>
+    </div>
+    <div role="tabpanel" id="ipanel-${P}-spark" aria-labelledby="itab-${P}-spark"></div>
+    <div role="tabpanel" id="ipanel-${P}-storage" aria-labelledby="itab-${P}-storage"></div>`;
+  const list = $(".inner-tabs", body);
+  const show = k => { st.sizingTab = k; setTabs(list, k, "itab"); $(`#ipanel-${P}-spark`).hidden = k !== "spark"; $(`#ipanel-${P}-storage`).hidden = k !== "storage"; };
+  list.addEventListener("click", e => { const b = e.target.closest("[data-itab]"); if (b) show(b.dataset.itab); });
+  wireTablist(list);
+  renderSpark(t, S.spark, $(`#ipanel-${P}-spark`));
+  renderStorage(t, S.storage, $(`#ipanel-${P}-storage`));
+  show("spark");
+}
+
+// Field generik: number input atau select. kind "text" = nilai string.
+function fieldHTML(prefix, f, val, optionsList) {
+  const id = `${prefix}-${f.id}`;
+  const control = optionsList
+    ? `<select id="${id}" data-f="${f.id}">${optionsList.map(o => `<option value="${esc(o.value)}" ${String(o.value) === String(val) ? "selected" : ""}>${esc(o.label)}</option>`).join("")}</select>`
+    : `<input type="number" id="${id}" data-f="${f.id}" value="${val}" step="${f.step || "any"}" min="${f.min ?? 0}" ${f.max != null ? `max="${f.max}"` : ""} inputmode="decimal" aria-describedby="${f.help ? id + "-h " : ""}${id}-e">`;
+  return `<div class="field" data-field="${f.id}"><label for="${id}">${esc(f.label)}${f.unit ? ` <span class="unit">(${esc(f.unit)})</span>` : ""}</label>${control}${f.help ? `<p class="fh" id="${id}-h">${esc(f.help)}</p>` : ""}<p class="err" id="${id}-e" hidden></p></div>`;
+}
+function readField(f, raw) { return f.kind === "text" ? raw : raw === "" ? NaN : parseFloat(raw); }
+function validateFields(fields, v) {
+  const errs = {};
+  fields.forEach(f => {
+    if (f.kind === "text") return;
+    const x = v[f.id], min = f.min ?? null;
+    if (!Number.isFinite(x)) errs[f.id] = "Wajib diisi dengan angka.";
+    else if (min === null && x <= 0) errs[f.id] = "Harus lebih dari 0.";
+    else if (min !== null && x < min) errs[f.id] = `Tidak boleh kurang dari ${num(min)}.`;
+    else if (f.max != null && x > f.max) errs[f.id] = `Maksimal ${num(f.max)}.`;
+  });
+  return errs;
+}
+function showErrors(root, prefix, fields, errs) {
+  fields.forEach(f => {
+    const e = $(`#${prefix}-${f.id}-e`, root), inp = $(`#${prefix}-${f.id}`, root);
+    if (!e) return;
+    e.hidden = !errs[f.id]; e.textContent = errs[f.id] || "";
+    inp.setAttribute("aria-invalid", !!errs[f.id]);
+  });
+}
+function stepCard(o) {
+  return `<article class="step s-item">
+    <header><span class="step-no">Langkah ${o.no}</span><h4>${o.title}</h4>${o.badge || ""}</header>
+    ${o.inputs ? `<dl class="kv">${o.inputs.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join("")}</dl>` : ""}
+    <div class="result">${o.result}</div>
+    ${o.extra || ""}
+    <p class="interp">${o.interp}</p>
+    <details class="formula" data-fkey="${o.key}" ${o.open ? "open" : ""}><summary>Lihat rumus</summary><pre>${esc(o.formula)}${o.calc ? "\n\nDengan angka saat ini:\n" + esc(o.calc) : ""}</pre></details>
+  </article>`;
+}
+const big = (v, label) => `<div class="big"><b>${v}</b><span>${label}</span></div>`;
+function evalRules(rules, metrics) {
+  const ops = { ">=": (a, b) => a >= b, "<=": (a, b) => a <= b, ">": (a, b) => a > b, "<": (a, b) => a < b };
+  return rules.filter(r => ops[r.op](metrics[r.metric], r.value));
+}
+function hbars(rows, ref, refLabel) {
+  const max = Math.max(ref, ...rows.map(r => r.value)) * 1.08;
+  return `<div class="hbars" role="img" aria-label="${esc(rows.map(r => `${r.label} ${num(r.value)} menit`).join(", ") + `; ${refLabel}`)}">${rows.map(r => `
+    <div class="hb"><span class="dbar-l">${esc(r.label)}</span><span class="hb-t"><span class="hb-f${r.value <= ref ? " ok" : ""}" style="width:${r.value / max * 100}%"></span><span class="hb-ref" style="left:${ref / max * 100}%"></span></span><span class="hb-v">~${num(r.value)} mnt</span></div>`).join("")}
+  </div><p class="legend"><span><i></i>Memenuhi SLA</span><span><i class="alt"></i>Melebihi SLA</span><span><i class="ref"></i>${esc(refLabel)}</span></p>`;
+}
+
+function renderSpark(t, SP, root) {
+  const st = tstate(t.id), P = t.slug + "-sp";
+  st.spark = Object.assign({}, SP.defaults);
+  st.openF = st.openF || new Set();
+  const optList = f => f.options ? f.options.map(o => ({ value: o, label: o.toLocaleString("id-ID", { minimumFractionDigits: 1 }) })) : null;
+  root.innerHTML = `
+    <div class="calc-summary" data-role="summary" aria-live="polite"></div>
+    <div class="calc">
+      <form class="calc-form" novalidate aria-label="Input Spark sizing">
+        <h3 class="h-sm">Input global</h3>
+        <div class="field">
+          <label for="${P}-volume">Volume data</label>
+          <div class="inline"><input type="number" id="${P}-volume" data-f="volume" step="any" min="0" inputmode="decimal" aria-describedby="${P}-volume-e"><select id="${P}-unit" data-f="unit" aria-label="Satuan volume"><option value="TB">TB</option><option value="GB">GB</option></select></div>
+          <label class="check"><input type="checkbox" id="${P}-decimal" data-f="decimal"> Pakai desimal (1 TB = 1.000 GB)</label>
+          <p class="err" id="${P}-volume-e" hidden></p>
+        </div>
+        ${SP.fields.map(f => fieldHTML(P, f, SP.defaults[f.id], optList(f))).join("")}
+        <p class="warnmsg" data-role="divwarn" hidden></p>
+        <div class="btns"><button type="button" class="btn" data-act="reset">Reset ke default</button><button type="button" class="btn" data-act="copy">Copy ringkasan</button><button type="button" class="btn primary" data-act="apply">Terapkan ke Stack Saya</button></div>
+      </form>
+      <div class="calc-out">
+        <div data-role="steps" style="display:grid;gap:14px"></div>
+        <p class="disclaimer">Hasil adalah estimasi kasar berbasis model linear dan wajib divalidasi dengan benchmark atau job nyata (Spark UI: durasi stage, shuffle read/write, spill).</p>
+      </div>
+    </div>`;
+  const allFields = [{ id: "volume" }].concat(SP.fields);
+  const syncInputs = () => {
+    const v = st.spark;
+    $(`#${P}-volume`, root).value = v.volume; $(`#${P}-unit`, root).value = v.unit; $(`#${P}-decimal`, root).checked = v.decimal;
+    SP.fields.forEach(f => { $(`#${P}-${f.id}`, root).value = v[f.id]; });
+  };
+  const update = () => {
+    const v = st.spark, errs = validateFields(allFields, v);
+    showErrors(root, P, allFields, errs);
+    const dw = $("[data-role=divwarn]", root);
+    const divBad = Number.isFinite(v.coresPerNode) && Number.isFinite(v.execPerNode) && v.execPerNode > 0 && v.coresPerNode % v.execPerNode !== 0;
+    dw.hidden = !divBad;
+    dw.textContent = divBad ? `Executor per node (${num(v.execPerNode)}) tidak habis membagi core per node (${num(v.coresPerNode)}). Sisa ${num(v.coresPerNode % v.execPerNode)} core per node tidak terpakai.` : "";
+    if (Object.keys(errs).length) {
+      $("[data-role=summary]", root).innerHTML = `<p class="alert bad"><span>Perbaiki ${Object.keys(errs).length} input yang belum valid untuk melihat hasil.</span></p>`;
+      $("[data-role=steps]", root).innerHTML = "";
+      st.sparkLast = null; applySearch(t); return;
+    }
+    const r = sparkCalc(v);
+    st.sparkLast = r;
+    $("[data-role=summary]", root).innerHTML = sparkSummaryHTML(v, r);
+    $("[data-role=steps]", root).innerHTML = sparkStepsHTML(SP, v, r, st.openF);
+    applySearch(t);
+  };
+  root.addEventListener("input", e => {
+    const k = e.target.dataset.f; if (!k) return;
+    const f = SP.fields.find(x => x.id === k);
+    st.spark[k] = k === "decimal" ? e.target.checked : k === "unit" ? e.target.value : readField(f || {}, e.target.value);
+    update();
+  });
+  root.addEventListener("toggle", e => { const k = e.target.dataset?.fkey; if (k) e.target.open ? st.openF.add(k) : st.openF.delete(k); }, true);
+  root.addEventListener("click", e => {
+    const act = e.target.closest("[data-act]")?.dataset.act;
+    if (act === "reset") { st.spark = Object.assign({}, SP.defaults); syncInputs(); update(); toast("Input Spark dikembalikan ke default"); }
+    else if (act === "copy") { if (st.sparkLast) copyText(sparkSummaryText(st.spark, st.sparkLast), "Ringkasan sizing disalin ke clipboard"); else toast("Perbaiki input terlebih dahulu"); }
+    else if (act === "apply") {
+      if (!st.sparkLast) { toast("Perbaiki input terlebih dahulu"); return; }
+      const v = st.spark;
+      st.cluster = { nodes: v.nodes, cores: v.coresPerNode, ram: v.ramPerNodeGB, waves: st.sparkLast.waves, worst: st.sparkLast.worst };
+      bus.dispatchEvent(new CustomEvent("cluster", { detail: t.id }));
+      toast("Diterapkan ke panel Stack Saya di Tool Explorer");
+    }
+  });
+  syncInputs(); update();
+}
+function sparkRecText(v, r) {
+  if (r.meets) return "SLA sudah terpenuhi pada skenario worst case; tidak perlu scale.";
+  return `perlu paralelisme ~${r.isInt ? num(r.factor) : `${num(r.nLow)}–${num(r.nHigh)}`}x (≈ ${num(r.nodesNew)} node) atau kurangi ekspansi shuffle ke ≤ ${num1(r.expTarget)}x.`;
+}
+function sparkSummaryHTML(v, r) {
+  return `<p><b>Cluster saat ini:</b> ${num(v.nodes)} node × ${num(v.coresPerNode)} core. <b>Waves:</b> ${num(r.waves)}. <b>Status memori:</b> ${r.oom ? `<span class="badge bad">Risiko OOM</span> ${r.bound}` : `<span class="badge good">OK</span> ${r.bound}`} (${num(r.effTasks)} task/executor). <b>Waktu shuffle:</b> ~${num(r.worst)} menit (worst) · ~${num(r.best)} menit (best). <b>Rekomendasi:</b> ${esc(sparkRecText(v, r))}</p>`;
+}
+function sparkSummaryText(v, r) {
+  return [
+    "SPARK SIZING — ringkasan",
+    `Cluster: ${v.nodes} node × ${v.coresPerNode} core × ${v.ramPerNodeGB} GB RAM, ${v.execPerNode} executor/node`,
+    `Volume: ${num(v.volume, 2)} ${v.unit} (${v.decimal ? "desimal" : "biner"}) = ${num(r.totalGB)} GB → ${num(r.partitions)} partisi @ ${v.partitionMB} MB`,
+    `Task paralel: ${num(r.parallel)} → ${num(r.waves)} waves`,
+    `Memori: ${num(r.memUsable, 1)} GB usable/node, ${num(r.memPerExec, 1)} GB/executor, ${r.corePerExec} core/executor, max ${r.maxTaskMem} task by memory → ${r.bound}${r.oom ? " (RISIKO OOM)" : " (OK)"}`,
+    `Shuffle: ${num(r.shuffleGB)} GB → ~${num(r.worst)} menit worst / ~${num(r.best)} menit best (SLA ${v.slaMin} menit)`,
+    `Faktor scale: ~${num1(r.factor)}x`,
+    `Opsi: a) ${r.nodesNew} node; b) ${r.coresNew} core/node; c) ekspansi ≤ ${num1(r.expTarget)}x`,
+    `Rekomendasi: ${sparkRecText(v, r)}`,
+    "Catatan: estimasi kasar, validasi dengan benchmark/job nyata."
+  ].join("\n");
+}
+function sparkStepsHTML(SP, v, r, openF) {
+  const F = SP.formulas, Bt = num(r.B), unitNote = v.unit === "TB" ? `${num(v.volume, 2)} TB × ${Bt}` : `${num(v.volume, 2)} GB`;
+  const rules = evalRules(SP.rules, { expansion: v.expansion, smallTableMB: v.smallTableMB, waves: r.waves, partitionMB: v.partitionMB });
+  const s1 = stepCard({ no: 1, key: "s1", open: openF.has("s1"), title: "Volume data",
+    inputs: [["Volume", `${num(v.volume, 2)} ${v.unit}`], ["Basis", v.decimal ? "desimal (1.000)" : "biner (1.024)"], ["Ukuran partisi", `${num(v.partitionMB)} MB`]],
+    result: big(num(r.totalGB), "total GB") + big(num(r.partitions), "total partisi"),
+    interp: "Ini adalah paralelisme minimum yang dibutuhkan.",
+    formula: F.s1, calc: `total_GB = ${unitNote} = ${num(r.totalGB)}\ntotal_partisi = ceil(${num(r.totalGB)} × ${Bt} ÷ ${num(v.partitionMB)}) = ${num(r.partitions)}` });
+  const s2 = stepCard({ no: 2, key: "s2", open: openF.has("s2"), title: "Kapasitas eksekusi paralel",
+    inputs: [["Node", num(v.nodes)], ["Core per node", num(v.coresPerNode)], ["Total partisi", num(r.partitions)]],
+    result: big(num(r.parallel), "task paralel") + big(num(r.waves), "waves"),
+    interp: "Menentukan perkiraan lama job sebelum eksekusi dimulai.",
+    formula: F.s2, calc: `task_paralel = ${num(v.nodes)} × ${num(v.coresPerNode)} = ${num(r.parallel)}\nwaves = ceil(${num(r.partitions)} ÷ ${num(r.parallel)}) = ceil(${num(r.partitions / r.parallel, 2)}) = ${num(r.waves)}` });
+  const s3 = stepCard({ no: 3, key: "s3", open: openF.has("s3"), title: "Memori",
+    badge: r.oom ? `<span class="badge bad">Risiko OOM</span>` : `<span class="badge good">OK</span>`,
+    inputs: [["RAM/node", `${num(v.ramPerNodeGB)} GB`], ["Usable", `${num(v.usablePct)}%`], ["Executor/node", num(v.execPerNode)], ["Batas memori/task", `${num1(v.memPerTaskGB)} GB`]],
+    result: big(`~${num(r.memUsable, 1)} GB`, "usable per node") + big(`~${num(r.memPerExec, 1)} GB`, "per executor") + big(num(r.corePerExec), "core per executor") + big(num(r.maxTaskMem), "max task by memory") + big(num(r.effTasks), "task efektif/executor"),
+    extra: `<p class="note"><b>Faktor pembatas: ${r.bound}.</b> ${r.oom
+      ? `Setiap executor punya ${num(r.corePerExec)} core, tetapi memori hanya cukup untuk ${num(r.maxTaskMem)} task. Kurangi executor.cores, naikkan RAM, atau turunkan beban memori per task. Task paralel efektif turun menjadi ${num(r.effParallel)}.`
+      : `Memori cukup untuk ${num(r.maxTaskMem)} task per executor, tetapi hanya ada ${num(r.corePerExec)} core. Pembatasnya CPU (${num(r.effTasks)} task), bukan memori.`}</p>`,
+    interp: r.oom ? "Memori menjadi pembatas; job berisiko gagal karena OOM sebelum masalah kecepatan muncul." : "Memori aman; kecepatan ditentukan oleh jumlah core.",
+    formula: F.s3, calc: `mem_usable = ${num(v.ramPerNodeGB)} × ${num(v.usablePct)}% = ${num(r.memUsable, 2)} GB\nmem_per_executor = ${num(r.memUsable, 2)} ÷ ${num(v.execPerNode)} = ${num(r.memPerExec, 2)} GB\ncore_per_executor = floor(${num(v.coresPerNode)} ÷ ${num(v.execPerNode)}) = ${num(r.corePerExec)}\nmax_task_by_memory = floor(${num(r.memPerExec, 2)} ÷ ${num1(v.memPerTaskGB)}) = ${num(r.maxTaskMem)}\ntask_efektif = min(${num(r.corePerExec)}, ${num(r.maxTaskMem)}) = ${num(r.effTasks)}` });
+  const altLabel = v.decimal ? "biner (1 TB = 1.024 GB)" : "desimal (1 TB = 1.000 GB)";
+  const s4 = stepCard({ no: 4, key: "s4", open: openF.has("s4"), title: "Estimasi biaya shuffle",
+    inputs: [["Total data", `${num(r.totalGB)} GB`], ["Faktor ekspansi", `${num1(v.expansion)}x`], ["Throughput disk", `${num(v.diskMBs)} MB/s = ${num(r.tput, 3)} GB/s`], ["Node", num(v.nodes)]],
+    result: big(fmtGB(r.shuffleGB), "data shuffle") + big(`~${num(r.worst)} mnt`, "worst case (satu disk)") + big(`~${num(r.best)} mnt`, "best case (disk paralel)"),
+    extra: `<p class="note">Versi ${altLabel}: ~${num(r.altWorst)} menit worst case. Selisih muncul karena konversi satuan; contoh sumber membulatkan 3 TB = 3.000 GB sehingga mendapat ~100 menit.</p>
+      <div style="display:grid;gap:6px">${rules.map(x => `<p class="alert ${x.level}"><span>${esc(x.text)}</span></p>`).join("")}</div>`,
+    interp: "Shuffle biasanya menjadi komponen terlama; skenario nyata berada di antara best dan worst case.",
+    formula: F.s4, calc: `shuffle_GB = ${num(r.totalGB)} × ${num1(v.expansion)} = ${num(r.shuffleGB)}\nworst = ${num(r.shuffleGB)} ÷ ${num(r.tput, 4)} ÷ 60 = ${num(r.worst, 1)} menit\nbest = ${num(r.shuffleGB)} ÷ (${num(r.tput, 4)} × ${num(v.nodes)}) ÷ 60 = ${num(r.best, 1)} menit` });
+  const rows = [
+    { label: "Saat ini", value: r.worst },
+    { label: "a) Tambah node", value: r.timeA },
+    { label: "b) Tambah core", value: r.timeB },
+    { label: "c) Kurangi shuffle", value: r.meets ? r.worst : r.timeC }
+  ];
+  const s5 = stepCard({ no: 5, key: "s5", open: openF.has("s5"), title: "Keputusan scale",
+    badge: r.meets ? `<span class="badge good">SLA terpenuhi</span>` : `<span class="badge warn">Perlu scale</span>`,
+    inputs: [["Waktu worst", `~${num(r.worst, 1)} menit`], ["SLA", `${num(v.slaMin)} menit`]],
+    result: big(`~${num1(r.factor)}x`, "faktor scale") + big(r.meets ? "—" : r.isInt ? `${num(r.factor)}x` : `${num(r.nLow)}–${num(r.nHigh)}x`, "peningkatan paralelisme"),
+    extra: r.meets ? `<p class="note">Waktu shuffle worst case sudah di bawah SLA. Tidak perlu menambah resource.</p>` : `
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Opsi</th><th>Perubahan</th><th>Estimasi waktu</th><th>Dampak biaya / effort</th></tr></thead>
+        <tbody>
+          <tr><td>a) Tambah node</td><td>${num(v.nodes)} → ${num(r.nodesNew)} node</td><td>~${num(r.timeA)} mnt</td><td>~${num1(r.nodesNew / v.nodes)}x biaya compute; disk ikut bertambah</td></tr>
+          <tr><td>b) Tambah core/node</td><td>${num(v.coresPerNode)} → ${num(r.coresNew)} core</td><td>~${num(r.timeB)} mnt*</td><td>RAM ikut naik ke ~${num(r.ramForCores)} GB/node agar rasio sama</td></tr>
+          <tr><td>c) Kurangi shuffle</td><td>ekspansi ${num1(v.expansion)}x → ≤ ${num1(r.expTarget)}x (${fmtGB(r.totalGB * r.expTarget)})</td><td>~${num(r.timeC)} mnt</td><td>Tanpa hardware baru; butuh refactor join, filter awal, broadcast</td></tr>
+        </tbody></table></div>
+      <p class="fh">* Opsi b hanya efektif bila throughput disk per node ikut naik (lebih banyak disk/NVMe). Menambah core saja tidak mempercepat I/O.</p>
+      ${hbars(rows, v.slaMin, `SLA ${num(v.slaMin)} menit`)}`,
+    interp: "Ini masalah optimasi matematis, bukan masalah config Spark.",
+    formula: F.s5, calc: `faktor_scale = ${num(r.worst, 1)} ÷ ${num(v.slaMin)} = ${num(r.factor, 2)}\nnode_baru = ceil(${num(v.nodes)} × ${num(r.factor, 2)}) = ${num(r.nodesNew)}\ncore_baru = ceil(${num(v.coresPerNode)} × ${num(r.factor, 2)}) = ${num(r.coresNew)}\nekspansi_target = ${num1(v.expansion)} × ${num(v.slaMin)} ÷ ${num(r.worst, 1)} = ${num(r.expTarget, 2)}` });
+  return s1 + s2 + s3 + s4 + s5;
+}
+
+function renderStorage(t, SD, root) {
+  const st = tstate(t.id), P = t.slug + "-db";
+  st.storage = Object.assign({}, SD.defaults);
+  st.openF = st.openF || new Set();
+  const allFields = SD.groups.flatMap(g => g.fields);
+  const opts = f => f.options === "dbTypes" ? SD.dbTypes.map(d => ({ value: d.id, label: d.label })) : f.options || null;
+  root.innerHTML = `
+    <div class="calc-summary" data-role="summary" aria-live="polite"></div>
+    <div class="calc">
+      <form class="calc-form" novalidate aria-label="Input storage sizing">
+        ${SD.groups.map(g => g.collapsible
+          ? `<details class="fgroup"><summary>${esc(g.label)}</summary><div style="display:grid;gap:12px">${g.fields.map(f => fieldHTML(P, f, SD.defaults[f.id], opts(f))).join("")}</div></details>`
+          : `<fieldset class="fgroup"><legend>${esc(g.label)}</legend>${g.fields.map(f => fieldHTML(P, f, SD.defaults[f.id], opts(f))).join("")}</fieldset>`).join("")}
+        <div class="btns"><button type="button" class="btn" data-act="reset">Reset ke default</button><button type="button" class="btn primary" data-act="copy">Copy ringkasan</button></div>
+      </form>
+      <div class="calc-out">
+        <div data-role="out" style="display:grid;gap:14px"></div>
+        <p class="disclaimer">Semua hasil adalah estimasi berbasis rule of thumb. Harga dan rasio kompresi adalah contoh yang perlu diverifikasi; validasi spesifikasi dengan load test (pgbench, sysbench, clickhouse-benchmark) dan penawaran vendor.</p>
+      </div>
+    </div>`;
+  const syncVisibility = () => allFields.forEach(f => {
+    if (f.showIf) $(`[data-field="${f.id}"]`, root).hidden = st.storage[f.showIf[0]] !== f.showIf[1];
+  });
+  const syncInputs = () => allFields.forEach(f => { $(`#${P}-${f.id}`, root).value = st.storage[f.id]; });
+  const update = () => {
+    const v = st.storage, active = allFields.filter(f => !f.showIf || v[f.showIf[0]] === f.showIf[1]);
+    const errs = validateFields(active, v);
+    if (Number.isFinite(v.rf) && !Number.isInteger(v.rf)) errs.rf = "Harus bilangan bulat.";
+    if (v.cacheHitPct >= 100 && !errs.cacheHitPct) errs.cacheHitPct = "Harus di bawah 100.";
+    showErrors(root, P, allFields, errs);
+    if (Object.keys(errs).length) {
+      $("[data-role=summary]", root).innerHTML = `<p class="alert bad"><span>Perbaiki ${Object.keys(errs).length} input yang belum valid (buka grup asumsi bila perlu) untuk melihat hasil.</span></p>`;
+      $("[data-role=out]", root).innerHTML = ""; st.storageLast = null; applySearch(t); return;
+    }
+    const db = SD.dbTypes.find(d => d.id === v.dbType), r = storageCalc(v, db);
+    st.storageLast = { r, db };
+    $("[data-role=summary]", root).innerHTML = `<p>${storageSummary(v, r, db, true)}</p>`;
+    $("[data-role=out]", root).innerHTML = storageOutHTML(SD, v, r, db, st.openF);
+    applySearch(t);
+  };
+  root.addEventListener("input", e => {
+    const k = e.target.dataset.f; if (!k) return;
+    const f = allFields.find(x => x.id === k);
+    st.storage[k] = readField(f, e.target.value);
+    if (k === "dbType") {
+      const d = SD.dbTypes.find(x => x.id === e.target.value);
+      ["compression", "indexOverheadPct", "qpsPerVcpu", "memPerConnMB"].forEach(x => { st.storage[x] = d[x]; });
+      syncInputs(); toast(`Default ${d.label} diterapkan ke kompresi, index, dan asumsi teknis`);
+    }
+    syncVisibility(); update();
+  });
+  root.addEventListener("toggle", e => { const k = e.target.dataset?.fkey; if (k) e.target.open ? st.openF.add(k) : st.openF.delete(k); }, true);
+  root.addEventListener("click", e => {
+    const act = e.target.closest("[data-act]")?.dataset.act;
+    if (act === "reset") { st.storage = Object.assign({}, SD.defaults); syncInputs(); syncVisibility(); update(); toast("Input storage dikembalikan ke default"); }
+    else if (act === "copy") {
+      if (!st.storageLast) { toast("Perbaiki input terlebih dahulu"); return; }
+      copyText(storageText(st.storage, st.storageLast.r, st.storageLast.db), "Ringkasan storage disalin ke clipboard");
+    }
+  });
+  syncVisibility(); update();
+}
+function storageSummary(v, r, db, html) {
+  const b = s => html ? `<b>${s}</b>` : s;
+  return `${b(db.label + ":")} kapasitas puncak 36 bulan ${b(fmtGB(r.peak.total))} total disk (bulan ke-${r.peak.m}), ${b(num(r.nodes) + " node")} (${num(r.shards)} shard × RF ${num(v.rf)}). Per node: ${b(`${num(r.vcpuNode)} vCPU · ${num(r.ramNode)} GB RAM · ${r.diskType} · ${num(r.iopsNode)} IOPS · ${r.nic}`)}. Biaya/bulan: On-Prem ${b(usd(r.onprem.total))} (${idr(r.onprem.total, v.kurs)}) · Cloud ${b(usd(r.cloud.total))} (${idr(r.cloud.total, v.kurs)}).`;
+}
+function storageText(v, r, db) {
+  const L = ["STORAGE SIZING — ringkasan", storageSummary(v, r, db, false), "", "Proyeksi total disk:"];
+  [0, 12, 24, 36].forEach(m => L.push(`- Bulan ${m}: ${fmtGB(r.series[m].total)} (satu salinan ${fmtGB(r.series[m].single)})`));
+  L.push("", "Parameter konfigurasi:");
+  r.params.forEach(p => L.push(`- ${p.name} = ${paramVal(p)}  [${p.formula}]`));
+  L.push("", "Catatan: estimasi kasar, validasi dengan load test.");
+  return L.join("\n");
+}
+const paramVal = p => typeof p.value === "number" ? (p.unit === "GB" ? num(p.value, 1) + " GB" : p.unit === "MB" ? num(p.value) + " MB" : num(p.value, 2)) : p.value;
+function lineChart(series) {
+  const W = 640, H = 260, L = 70, R = 18, T = 18, B = 34;
+  const maxY = niceMax(Math.max(...series.map(p => p.total)));
+  const x = m => L + (W - L - R) * m / (series.length - 1), y = v => T + (H - T - B) * (1 - v / maxY);
+  let s = "";
+  for (let i = 0; i <= 4; i++) { const v = maxY * i / 4; s += `<line class="ax" x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/><text class="ax-t" x="${L - 8}" y="${y(v) + 4}" text-anchor="end">${fmtGB(v)}</text>`; }
+  for (let m = 0; m < series.length; m += 6) s += `<text class="ax-t" x="${x(m)}" y="${H - 10}" text-anchor="middle">${m === 0 ? "Bulan 0" : m}</text>`;
+  const pts = k => series.map(p => `${x(p.m).toFixed(1)},${y(p[k]).toFixed(1)}`).join(" ");
+  s += `<polyline class="ln b" points="${pts("single")}"/><polyline class="ln a" points="${pts("total")}"/>`;
+  [12, 24, 36].forEach(m => { const p = series[m]; s += `<circle class="dot" cx="${x(m)}" cy="${y(p.total)}" r="4"/><text class="dot-t" x="${x(m) - 6}" y="${y(p.total) - 9}" text-anchor="${m === 36 ? "end" : "middle"}">${fmtGB(p.total)}</text>`; });
+  return `<div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Proyeksi storage 36 bulan: bulan 12 ${fmtGB(series[12].total)}, bulan 24 ${fmtGB(series[24].total)}, bulan 36 ${fmtGB(series[36].total)}">${s}</svg></div>
+    <p class="legend"><span><i></i>Total disk (replika + buffer)</span><span><i class="alt"></i>Satu salinan (terkompresi + index)</span></p>`;
+}
+function storageOutHTML(SD, v, r, db, openF) {
+  const F = SD.formulas, rowsT = [0, 12, 24, 36].map(m => r.series[m]);
+  const fdet = (key, txt, calc) => `<details class="formula" data-fkey="${key}" ${openF.has(key) ? "open" : ""}><summary>Lihat rumus</summary><pre>${esc(txt)}${calc ? "\n\nDengan angka saat ini:\n" + esc(calc) : ""}</pre></details>`;
+  const card = (title, inner, key, txt, calc) => `<article class="step s-item"><header><h4>${title}</h4></header>${inner}${fdet(key, txt, calc)}</article>`;
+  const storage = card("Estimasi storage & proyeksi", `
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Komponen</th>${rowsT.map(p => `<th>Bulan ${p.m}</th>`).join("")}</tr></thead>
+      <tbody>
+        <tr><td>Baris tersimpan</td>${rowsT.map(p => `<td>${num(p.rows / 1e6, 1)} jt</td>`).join("")}</tr>
+        <tr><td>Raw</td>${rowsT.map(p => `<td>${fmtGB(p.raw)}</td>`).join("")}</tr>
+        <tr><td>Setelah kompresi (${num1(v.compression)}x)</td>${rowsT.map(p => `<td>${fmtGB(p.comp)}</td>`).join("")}</tr>
+        <tr><td>+ Index (${num(v.indexCount)} × ${num(v.indexOverheadPct)}%)</td>${rowsT.map(p => `<td>${fmtGB(p.idx)}</td>`).join("")}</tr>
+        <tr><td>Satu salinan</td>${rowsT.map(p => `<td>${fmtGB(p.single)}</td>`).join("")}</tr>
+        <tr><td>× Replika (RF ${num(v.rf)})</td>${rowsT.map(p => `<td>${fmtGB(p.repl)}</td>`).join("")}</tr>
+        <tr class="hi"><td>+ Buffer ${num(v.headroomPct)}% = Total</td>${rowsT.map(p => `<td>${fmtGB(p.total)}</td>`).join("")}</tr>
+      </tbody></table></div>
+    ${lineChart(r.series)}
+    ${v.retentionMonths < 36 ? `<p class="fh">Retensi ${num(v.retentionMonths)} bulan: setelah bulan ke-${num(v.retentionMonths)}, data lama terhapus sehingga kurva melandai.</p>` : ""}`,
+    "st-storage", F.storage, `bulan 36: baris = ${num(rowsT[3].rows)}; raw = ${fmtGB(rowsT[3].raw)}; total = ${fmtGB(rowsT[3].total)}`);
+  const spec = card("Rekomendasi spesifikasi", `
+    <div class="result">${big(num(r.nodes), `node (${num(r.shards)} shard × RF ${num(v.rf)})`)}${big(num(r.vcpuNode), "vCPU per node")}${big(num(r.ramNode) + " GB", "RAM per node")}${big(fmtGB(r.diskNode), "disk per node")}${big(num(r.iopsNode), "IOPS per node")}${big(r.nic, "jaringan")}</div>
+    <dl class="kv">
+      <div><dt>Jenis disk</dt><dd>${esc(r.diskType)}</dd></div>
+      <div><dt>vCPU total (sebelum dibulatkan)</dt><dd>${num(r.vcpuTotal)}</dd></div>
+      <div><dt>Kebutuhan RAM</dt><dd>${num(r.ramNeed, 1)} GB</dd></div>
+      <div><dt>Bandwidth puncak</dt><dd>${num(r.netMbps)} Mbps</dd></div>
+      <div><dt>Write / read QPS</dt><dd>${num(r.writeQps)} / ${num(r.readQps)}</dd></div>
+    </dl>
+    ${db.id === "columnar" ? `<p class="note">Untuk engine serverless, angka vCPU/RAM adalah ekuivalen kapasitas, bukan server yang Anda kelola.</p>` : ""}
+    ${r.shards > 1 ? `<p class="note">Butuh ${num(r.shards)} shard karena ${r.storageShards >= r.computeShards ? "kapasitas disk per node" : "kebutuhan vCPU"} melebihi batas per node. Untuk ${esc(db.label)}, pertimbangkan ${db.columnar ? "cluster terdistribusi" : "partisi/sharding (misal Citus atau Vitess) atau arsitektur read replica"}.</p>` : ""}`,
+    "st-spec", F.spec + "\n\n" + F.io,
+    `vCPU_total = ceil(${num(v.peakQps)} ÷ ${num(v.qpsPerVcpu)} × ${num(1 + v.headroomPct / 100, 2)}) = ${num(r.vcpuTotal)}\nRAM = ${num(r.hotGB, 1)} (data panas) + ${num(r.connGB, 2)} (koneksi) + 2 = ${num(r.ramNeed, 1)} GB → ${num(r.ramNode)} GB\nIOPS = (${num(r.writeQps)} × ${num(v.ioPerWrite)} + ${num(r.readQps)} × ${num(1 - v.cacheHitPct / 100, 2)} × ${num(v.ioPerRead)}) × ${num(1 + v.headroomPct / 100, 2)} = ${num(r.iops)}`);
+  const params = card(`Parameter konfigurasi kunci · ${esc(db.label)}`, `
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Parameter</th><th>Nilai</th><th style="text-align:left">Rumus</th></tr></thead>
+      <tbody>${r.params.map(p => `<tr><td class="mono">${esc(p.name)}</td><td>${esc(paramVal(p))}</td><td style="text-align:left;white-space:normal">${esc(p.formula)}</td></tr>`).join("")}</tbody>
+    </table></div>
+    <p class="fh">Dihitung dari spesifikasi per node: ${num(r.ramNode)} GB RAM, ${num(r.vcpuNode)} vCPU, ${num(r.iopsNode)} IOPS, ${num(v.connections)} koneksi. Rule of thumb, perlu diverifikasi dengan dokumentasi versi DB yang dipakai.</p>`,
+    "st-params", "Lihat kolom “Rumus” di tabel. Konteks: RAM, vCPU, IOPS per node dan jumlah koneksi.", "");
+  const o = r.onprem, c = r.cloud, k = v.kurs;
+  const row = (l, val) => `<dt>${l}</dt><dd>${usd(val)}</dd>`;
+  const cost = card("Estimasi biaya bulanan", `
+    <div class="cost-grid">
+      <div class="cost${v.env === "onprem" ? " sel" : ""}"><h5><span>On-Prem</span>${v.env === "onprem" ? `<span class="badge ent">Dipilih</span>` : ""}</h5>
+        <dl>${row("Hardware (amortisasi)", o.hw)}${row("Disk (amortisasi)", o.disk)}${row("Listrik × PUE", o.power)}${row("Ops & rack", o.ops)}<dt class="tot">Total</dt><dd class="tot">${usd(o.total)}</dd></dl>
+        <p class="mono" style="font-size:13px">${idr(o.total, k)} / bulan</p></div>
+      <div class="cost${v.env === "cloud" ? " sel" : ""}"><h5><span>Cloud</span>${v.env === "cloud" ? `<span class="badge ent">Dipilih</span>` : ""}</h5>
+        <dl>${row("Compute", c.compute)}${row("Storage", c.storage)}${row("Egress", c.egress)}<dt class="tot">Total</dt><dd class="tot">${usd(c.total)}</dd></dl>
+        <p class="mono" style="font-size:13px">${idr(c.total, k)} / bulan</p></div>
+    </div>
+    <p class="fh">Kurs ${num(k)} IDR/USD. Harga per unit adalah contoh dan bisa diubah di grup “Asumsi biaya”. Belum termasuk lisensi, backup, dan tenaga kerja engineering.</p>`,
+    "st-cost", F.cost, `On-Prem: ${num(r.nodes)} × ${num(v.serverUSD)} ÷ ${num(v.amortMonths)} + … = ${usd(o.total)}\nCloud: ${num(r.nodes)} × (${num(r.vcpuNode)} × ${v.vcpuHrUSD} + ${num(r.ramNode)} × ${v.ramGbHrUSD}) × 730 + … = ${usd(c.total)}`);
+  return storage + spec + params + cost;
+}
+
+/* ---------- 7d. Catatan ---------- */
+function renderNotes(t, sec, body) {
+  const notes = [...t[sec.source]].sort((a, b) => b.date.localeCompare(a.date));
+  body.innerHTML = `<div class="notes">${notes.map(n => `
+    <article class="note-e s-item">
+      <div class="note-meta"><time datetime="${n.date}">${fmtDate(n.date)}</time><div class="tags">${n.tags.map(g => `<span class="tag">${esc(g)}</span>`).join("")}</div></div>
+      <h4>${esc(n.title)}</h4>
+      <p>${esc(n.body)}</p>
+      <p class="note-src">Sumber: ${esc(n.source)}</p>
+    </article>`).join("")}</div>`;
+}
+
+/* ---------- 7e. Checklist ---------- */
+function renderChecklist(t, sec, body) {
+  const C = t[sec.source], st = tstate(t.id), P = t.slug;
+  st.checks = {};
+  const total = C.groups.reduce((a, g) => a + g.items.length, 0);
+  body.innerHTML = `<div class="cl-wrap">
+    <p class="progress" data-role="progress"></p>
+    ${C.groups.map((g, gi) => `<section class="cl-group s-group"><h4>${esc(g.title)}</h4>${g.items.map((it, ii) => `
+      <div class="cl-item s-item"><input type="checkbox" id="cl-${P}-${gi}-${ii}" data-ck="${gi}-${ii}"><label for="cl-${P}-${gi}-${ii}"><span>${esc(it.text)}</span><small>${esc(it.detail)}</small></label></div>`).join("")}
+    </section>`).join("")}</div>`;
+  const prog = () => { $("[data-role=progress]", body).textContent = `${Object.values(st.checks).filter(Boolean).length}/${total} item selesai`; };
+  body.addEventListener("change", e => { const k = e.target.dataset.ck; if (k) { st.checks[k] = e.target.checked; prog(); } });
+  prog();
+}
+
+/* =====================================================================
+   8. DAFTAR ISI (pencarian lintas topik)
+   ===================================================================== */
+const SKIP_KEYS = new Set(["slug", "id", "type", "source", "scores", "calc", "cat", "flow", "flowOrder", "updated", "date", "showIf", "level", "metric", "op", "needsAny", "tool", "providers", "defaults"]);
+function collectStrings(obj, out = []) {
+  if (typeof obj === "string") { if (obj.length > 2) out.push(obj); }
+  else if (Array.isArray(obj)) obj.forEach(x => collectStrings(x, out));
+  else if (obj && typeof obj === "object") Object.entries(obj).forEach(([k, v]) => { if (!SKIP_KEYS.has(k)) collectStrings(v, out); });
+  return out;
+}
+const TOPIC_INDEX = TOPICS.map(t => ({ t, strings: [...new Set(collectStrings(t))] }));
+function snippet(s, q) {
+  const i = s.toLowerCase().indexOf(q), a = Math.max(0, i - 40), b = Math.min(s.length, i + q.length + 70);
+  return (a > 0 ? "…" : "") + s.slice(a, b) + (b < s.length ? "…" : "");
+}
+function paintHome() {
+  const input = $("#q-home"), q = input.value.trim().toLowerCase();
+  const res = TOPIC_INDEX.map(({ t, strings }) => ({ t, hits: q ? strings.filter(s => s.toLowerCase().includes(q)) : [] })).filter(x => !q || x.hits.length);
+  $("#toc-grid").innerHTML = res.map(({ t, hits }) => `
+    <a class="toc-card" href="#${t.slug}" data-slug="${t.slug}">
+      <p class="eyebrow">${t.sections.length} bagian${q ? ` · ${hits.length} kecocokan` : ""}</p>
+      <h3>${esc(t.title)}</h3>
+      <p>${esc(t.desc)}</p>
+      <div class="tags">${t.tags.map(g => `<span class="tag">${esc(g)}</span>`).join("")}</div>
+      <p class="secs">Bagian: ${t.sections.map(s => esc(s.label)).join(" · ")}</p>
+      ${q ? `<div class="snips">${hits.filter(h => h !== t.title && h !== t.desc).slice(0, 3).map(h => `<p>${esc(snippet(h, q))}</p>`).join("")}</div>` : ""}
+    </a>`).join("");
+  if (q) highlight($("#toc-grid"), q);
+  $("#toc-empty").hidden = !(q && !res.length);
+  $("#toc-empty").textContent = `Tidak ditemukan hasil untuk “${q}” di semua topik.`;
+  $("#qs-home").textContent = q ? (res.length ? `${res.length} topik cocok. Klik kartu untuk membuka; kata kunci ikut disorot di dalam topik.` : "") : "";
+}
+
+/* =====================================================================
+   9. SHELL, ROUTING, FOOTER, INIT
+   ===================================================================== */
+function topicPanelHTML(t) {
+  return `<section class="topic-panel" role="tabpanel" id="panel-${t.slug}" data-slug="${t.slug}" aria-labelledby="tab-${t.slug}" hidden>
+    <header class="topic-head">
+      <div class="th-text"><p class="eyebrow">Topik · ${t.sections.length} bagian</p><h2>${esc(t.title)}</h2><p class="lede">${esc(t.desc)}</p></div>
+      <div class="searchbox"><label for="q-${t.slug}">Cari di tab ini</label><input type="search" id="q-${t.slug}" placeholder="Judul, deskripsi, nama tool, isi checklist…" autocomplete="off"><p class="search-status" id="qs-${t.slug}" aria-live="polite"></p></div>
+    </header>
+    <div class="subtabs" role="tablist" aria-label="Bagian ${esc(t.title)}">${t.sections.map(s => `<button role="tab" id="stab-${t.slug}-${s.id}" data-sec="${s.id}" aria-controls="sec-${t.slug}-${s.id}" aria-selected="false" tabindex="-1">${esc(s.label)}<span class="cnt" id="cnt-${t.slug}-${s.id}" hidden></span></button>`).join("")}</div>
+    ${t.sections.map(s => `<div class="sec" role="tabpanel" id="sec-${t.slug}-${s.id}" aria-labelledby="stab-${t.slug}-${s.id}" hidden><div class="sec-body"></div><p class="empty" id="emp-${t.slug}-${s.id}" hidden></p></div>`).join("")}
+  </section>`;
+}
+function homePanelHTML() {
+  return `<section class="topic-panel" role="tabpanel" id="panel-${HOME}" data-slug="${HOME}" aria-labelledby="tab-${HOME}" hidden>
+    <header class="topic-head">
+      <div class="th-text"><p class="eyebrow">Daftar Isi · ${TOPICS.length} topik</p><h2>Semua topik</h2><p class="lede">Klik kartu untuk membuka topik. Pencarian di sini menelusuri isi semua topik: kriteria, tool, rumus, checklist, dan catatan.</p></div>
+      <div class="searchbox"><label for="q-home">Cari lintas semua topik</label><input type="search" id="q-home" placeholder="Misal: BigQuery, shuffle, compliance…" autocomplete="off"><p class="search-status" id="qs-home" aria-live="polite"></p></div>
+    </header>
+    <div class="toc-grid" id="toc-grid"></div>
+    <p class="empty" id="toc-empty" hidden></p>
+  </section>`;
+}
+function parseHash() {
+  const h = decodeURIComponent(location.hash.slice(1)).toLowerCase();
+  if (!/^[a-z0-9-]+$/.test(h) || h === HOME) return { topic: null };
+  for (const t of TOPICS) {
+    if (h === t.slug) return { topic: t };
+    const sec = h.startsWith(t.slug + "-") && t.sections.find(s => s.id === h.slice(t.slug.length + 1));
+    if (sec) return { topic: t, section: sec.id };
+  }
+  return { topic: null };
+}
+function route() {
+  const r = parseHash(), slug = r.topic ? r.topic.slug : HOME;
+  setTabs($("#tabs"), slug, "slug");
+  $$(".topic-panel").forEach(p => { p.hidden = p.dataset.slug !== slug; });
+  if (!r.topic) return;
+  const t = r.topic, st = tstate(t.id), secId = r.section || st.section || t.sections[0].id;
+  st.section = secId;
+  setTabs($(`#panel-${t.slug} .subtabs`), secId, "sec");
+  t.sections.forEach(s => { $(`#sec-${t.slug}-${s.id}`).hidden = s.id !== secId; });
+}
+function buildFooter() {
+  const m = KB_DATA.meta;
+  $("#footer").innerHTML = `
+    <p class="muted">${esc(m.disclaimer)} Terakhir diperbarui ${fmtDate(m.updated)} · versi ${esc(m.version)}.</p>
+    <details><summary>Cara update knowledge base ini</summary>
+      <div class="howto">${m.howTo.map(h => `<div><h4>${esc(h.title)}</h4><p>${esc(h.text)}</p>${h.code ? `<pre>${esc(h.code)}</pre>` : ""}</div>`).join("")}</div>
+    </details>`;
+}
+function init() {
+  const m = KB_DATA.meta;
+  $("#mast-title").textContent = m.title;
+  $("#mast-meta").textContent = `Knowledge base · v${m.version} · diperbarui ${fmtDate(m.updated)}`;
+  const pd = KB_DATA.topics.pipelineDecision;
+  $("#mast-stats").innerHTML = [[TOPICS.length, "topik"], [pd.tools.items.length, "tool"], [pd.wizard.criteria.length, "kriteria"], [pd.tools.categories.length, "kategori"]]
+    .map(([n, l]) => `<div><b>${n}</b><span>${l}</span></div>`).join("");
+
+  const nav = $("#tabs");
+  nav.innerHTML = [{ slug: HOME, title: "Daftar Isi" }].concat(TOPICS).map(t => `<button role="tab" id="tab-${t.slug}" data-slug="${t.slug}" aria-controls="panel-${t.slug}" aria-selected="false" tabindex="-1">${esc(t.title)}</button>`).join("");
+  nav.addEventListener("click", e => { const b = e.target.closest("[role=tab]"); if (b) location.hash = b.dataset.slug; });
+  wireTablist(nav);
+
+  $("#main").innerHTML = homePanelHTML() + TOPICS.map(topicPanelHTML).join("");
+  $("#q-home").addEventListener("input", paintHome);
+  $("#toc-grid").addEventListener("click", e => {
+    const card = e.target.closest(".toc-card"), q = $("#q-home").value.trim();
+    if (!card || !q) return;
+    const t = TOPICS.find(x => x.slug === card.dataset.slug), inp = $("#q-" + t.slug);
+    inp.value = q; tstate(t.id).search = q; applySearch(t);
+  });
+
+  TOPICS.forEach(t => {
+    const panel = $("#panel-" + t.slug), list = $(".subtabs", panel);
+    list.addEventListener("click", e => { const b = e.target.closest("[role=tab]"); if (b) location.hash = `${t.slug}-${b.dataset.sec}`; });
+    wireTablist(list);
+    t.sections.forEach(s => {
+      const body = $(`#sec-${t.slug}-${s.id} .sec-body`), fn = RENDERERS[s.type];
+      if (fn) fn(t, s, body);
+      else body.innerHTML = `<p class="empty">Tipe bagian “${esc(s.type)}” belum dikenal. Gunakan salah satu: ${Object.keys(RENDERERS).join(", ")}.</p>`;
+    });
+    $("#q-" + t.slug).addEventListener("input", e => { tstate(t.id).search = e.target.value; applySearch(t); });
+    applySearch(t);
+  });
+
+  $("#copybox-close").addEventListener("click", () => { $("#copybox").hidden = true; });
+  buildFooter();
+  paintHome();
+  window.addEventListener("hashchange", route);
+  route();
+}
+if (typeof document !== "undefined") init();
+</script>
+</body>
+</html>
